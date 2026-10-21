@@ -85,6 +85,11 @@ input[type=password]{width:100%;font:inherit;padding:11px 12px;border:1.5px soli
 .intro{background:var(--blue2);border-left:4px solid var(--red);border-radius:6px;padding:12px 14px;margin-bottom:16px;font-size:.95rem}
 .intro b{display:block;margin-bottom:2px}
 @media print{#tabs,.sub2,.noprint{display:none!important}body{background:#fff}.wrap,.wrap.adm{max-width:none;padding:12px 0 0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,.kpi,.dist,blockquote{break-inside:avoid}.grid2{grid-template-columns:1fr}.top .in{padding-top:0}@page{margin:12mm}}
+.cm{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
+.cmh{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}.cmh b{margin-right:2px}
+.cm blockquote{margin:0 0 6px}.cm blockquote:last-child{margin-bottom:0}
+.cmlist{max-height:75vh;overflow:auto;padding-right:2px}
+@media print{.cm{break-inside:avoid}.cmcard{break-inside:auto!important}.cmlist{max-height:none;overflow:visible}}
 .onlyprint{display:none}@media print{.onlyprint{display:block}}
 </style>
 </head>
@@ -179,9 +184,12 @@ h+='<div class="grid2"><div><div class="card"><h2 class="evtag">'+esc(t)+'</h2><
 h+='<div class="kpis"><div class="kpi"><b>'+s.n+"</b><span>respostas concluídas"+(inv?" · "+inv+" investidores únicos":"")+'</span></div><div class="kpi r"><b>'+(s.inv?Math.round(s.n/s.inv*100)+"%":"—")+"</b><span>taxa de resposta"+(s.inv?" ("+s.n+" de "+s.inv+")":" (convidados não informados)")+'</span></div><div class="kpi"><b>'+s.ind.toFixed(0)+'%</b><span>indicariam a Calper</span></div><div class="kpi"><b>'+s.hora.toFixed(0)+'%</b><span>atendidos no horário</span></div></div>';
 h+='<div class="card"><h3 style="margin-bottom:8px">Avaliação por quesito</h3><div class="legend">'+SC.map(function(z,i){return '<span><s style="background:var(--c'+(5-i)+')"></s>'+z+"</span>"}).join("")+"</div>";
 Object.keys(LAB).forEach(function(k){var d=s.dist[k],tt=d.reduce(function(a,b){return a+b},0)||1;h+='<div class="dist"><div class="name"><span>'+LAB[k]+"</span><b>"+s.avg[k].toFixed(2)+'</b></div><div class="stack">'+d.map(function(c,i){return '<i style="width:'+c/tt*100+"%;background:var(--c"+(5-i)+')" title="'+SC[i]+": "+c+'"></i>'}).join("")+"</div></div>"});
-h+='</div></div><div><div class="card"><h3 style="margin-bottom:10px">Comentários</h3>';
+h+='</div></div><div><div class="card cmcard"><h3 style="margin-bottom:10px">Comentários</h3>';
 if(!s.com.length)h+='<p class="sub">Nenhum comentário ainda.</p>';
-s.com.slice(0,7).forEach(function(r){if(r.a.fortes)h+="<blockquote><b>Ponto forte:</b> "+esc(r.a.fortes)+"</blockquote>";if(r.a.melh)h+="<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>"});
+var cm=s.com.slice().sort(function(a,b){return(a.block+"").localeCompare(b.block+"",undefined,{numeric:true})||(a.unit+"").localeCompare(b.unit+"",undefined,{numeric:true})||(a.name+"").localeCompare(b.name+"")});
+if(cm.length)h+='<p class="sub" style="margin:0 0 10px">'+cm.length+(cm.length>1?" investidores com comentários":" investidor com comentário")+", ordenados por bloco e unidade.</p><div class=\"cmlist\">";
+cm.forEach(function(r){var vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";h+='<div class="cm"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(r.rep?'<span class="tag cl">Representante'+(r.resp?": "+esc(r.resp):"")+"</span>":"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+"</div>"+(r.a.fortes?"<blockquote><b>Ponto forte:</b> "+esc(r.a.fortes)+"</blockquote>":"")+(r.a.melh?"<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>":"")+"</div>"});
+if(cm.length)h+="</div>";
 return h+"</div></div></div>"}
 
 var flash="",N={n:"",d1:"",d2:"",i:"",h:"10:00"},NEWEV=[];
@@ -235,7 +243,7 @@ if(r.error){LGERR="E-mail ou senha incorretos.";render();return}LGERR="";await b
 async function logout(){await DB.auth.signOut();SESSION=null;ROLE=null;EV=[];R={};render()}
 async function loadAll(){var a=await DB.from("empreendimentos").select("id,nome").order("nome"),b=await DB.from("visitas").select("id,empreendimento_id,data_visita,fecha_em,convidados").order("data_visita"),c=await DB.from("respostas").select("visita_id,nome,bloco,unidade,conteudo").limit(1000);
 EV=[];R={};(a.data||[]).forEach(function(e){var ss=(b.data||[]).filter(function(v){return v.empreendimento_id===e.id}).map(mkSdb);if(ss.length){EV.push({id:e.id,n:e.nome,ss:ss});ss.forEach(function(x){R[x.id]=[]})}});
-(c.data||[]).forEach(function(r){if(R[r.visita_id])R[r.visita_id].push({name:r.nome,rep:!!r.conteudo.rep,block:r.bloco||"",unit:r.unidade||"",complete:true,a:r.conteudo.a||{}})});
+(c.data||[]).forEach(function(r){if(R[r.visita_id])R[r.visita_id].push({v:r.visita_id,resp:r.conteudo.respondente||"",name:r.nome,rep:!!r.conteudo.rep,block:r.bloco||"",unit:r.unidade||"",complete:true,a:r.conteudo.a||{}})});
 if(EV.length){if(!EV.some(function(e){return e.id===repEv}))repEv=EV[0].id;var e=EV.filter(function(x){return x.id===repEv})[0];if(view!=="all"&&view!=="cmp"&&!(S(view)&&S(view).e.id===repEv))view=e.ss[0].id;if(!S(qrS))qrS=e.ss[0].id}}
 async function loadVisita(){var r=await DB.rpc("obter_visita",{p_visita:cur}),v=r.data&&r.data[0];EV=[];R={};
 if(v){var s=mkS(v.id,v.data_visita,0,"");s.c=cTxt(v.fecha_em);s.st=v.aberta?"Aberta":"Encerrada";EV=[{id:"x",n:v.empreendimento,ss:[s]}];R[cur]=[]}}
