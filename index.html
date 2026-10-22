@@ -41,7 +41,7 @@ div.ctx p{color:#f3d9db}
 .opts button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:12px 2px;min-height:48px;font:500 .8rem/1.2 inherit;font-family:inherit;cursor:pointer}
 .opts.two button{font-size:.95rem}
 .opts button.on{background:var(--blue);border-color:var(--blue);color:var(--onb);font-weight:600}
-input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+input[type=text],input[type=date],input[type=time],input[type=number],input[type=datetime-local],textarea,select{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
 textarea{min-height:90px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn{border:0;border-radius:8px;padding:12px 18px;font:600 .95rem inherit;font-family:inherit;cursor:pointer;background:var(--blue);color:var(--onb);text-decoration:none;display:inline-block}
@@ -90,6 +90,9 @@ input[type=password]{width:100%;font:inherit;padding:11px 12px;border:1.5px soli
 .cm blockquote{margin:0 0 6px}.cm blockquote:last-child{margin-bottom:0}
 .cmlist{max-height:75vh;overflow:auto;padding-right:2px}
 @media print{.cm{break-inside:avoid}.cmcard{break-inside:auto!important}.cmlist{max-height:none;overflow:visible}}
+@media print{body.pq #app>*:not(.qrposter){display:none!important}}
+.btn[disabled]{opacity:.6;cursor:default}
+details.card>summary{cursor:pointer;font-weight:600}
 .onlyprint{display:none}@media print{.onlyprint{display:block}}
 </style>
 </head>
@@ -136,7 +139,7 @@ h+='<div class="prog"><div class="t"><span>Etapa '+step+" de 4 · "+STEPS[step-1
 if(step===1){h+='<div class="q"><span class="l">Quem está respondendo?</span><div class="opts two"><button class="'+(F.who==="inv"?"on":"")+'" onclick="setF(\'who\',\'inv\')">Sou o investidor</button><button class="'+(F.who==="rep"?"on":"")+'" onclick="setF(\'who\',\'rep\')">Sou representante</button></div></div>'+inp("name",F.who==="rep"?"Seu nome":"Nome do investidor")+(F.who==="rep"?inp("inv","Nome do investidor representado"):"")+'<div class="row2">'+inp("block","Bloco")+inp("unit","Unidade")+"</div>"+inp("staff","Nome do funcionário (opcional)")}
 else Q.filter(function(q){return q.s===step}).forEach(function(q){h+=qH(q)});
 (window._e||[]).forEach(function(m){h+='<p class="err">'+m+"</p>"});window._e=null;
-h+='<div class="nav">'+(step>1?'<button class="btn back" onclick="go(-1)">Voltar</button>':"<span></span>")+(step<4?'<button class="btn" onclick="go(1)">Continuar</button>':'<button class="btn" onclick="send()">Enviar respostas</button>')+"</div></div>";
+h+='<div class="nav">'+(step>1?'<button class="btn back" onclick="go(-1)">Voltar</button>':"<span></span>")+(step<4?'<button class="btn" onclick="go(1)">Continuar</button>':'<button class="btn" onclick="send()"'+(SENDING?" disabled":"")+'>'+(SENDING?"Enviando…":"Enviar respostas")+'</button>')+"</div></div>";
 h+='<div class="card"><b>Prefere terminar ao final da visita?</b><p class="sub">Seu progresso fica salvo neste aparelho. Envie o link para o seu WhatsApp e responda quando preferir: o envio da pesquisa pode ser feito até o final do dia.</p><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("Pesquisa da visita – "+x.e.n+" ("+x.s.f+"): "+linkOf(x.s.id))+'">Enviar o link para o meu WhatsApp</a></div>';return h}
 function inp(k,l){return '<div class="q"><label for="f_'+k+'">'+l+'</label><input type="text" id="f_'+k+'" value="'+esc(F[k]||"")+'" oninput="typ(\''+k+'\',this.value)" autocomplete="off"></div>'}
 function qH(q){var h='<div class="q"><span class="l">'+q.t+(q.y==="tx"?" (opcional)":"")+"</span>";
@@ -146,28 +149,47 @@ function typ(k,v){F[k]=v;save();var b=document.getElementById("pb");if(b){b.styl
 function setF(k,v){F[k]=v;save();render()}
 function setCur(v){cur=v;F={};step=1;done=false;save();render()}
 function go(d){if(d>0){var m=stepOk(step);if(m.length){window._e=m;render();return}}step+=d;save();render();window.scrollTo(0,0)}
-async function send(){var m=stepOk(4);if(m.length){window._e=m;render();return}
+async function send(){if(SENDING)return;var m=stepOk(4);if(m.length){window._e=m;render();return}
 var nm=(F.who==="rep"?F.inv:F.name).trim(),a={};Q.forEach(function(q){a[q.k]=F[q.k]||""});
-var r=await DB.from("respostas").insert({visita_id:cur,nome:nm,bloco:String(F.block).toUpperCase().trim(),unidade:String(F.unit).trim(),conteudo:{rep:F.who==="rep",respondente:F.name,staff:F.staff,a:a}});
+SENDING=true;render();var r;try{r=await DBA.from("respostas").insert({visita_id:cur,nome:nm,bloco:String(F.block).toUpperCase().trim(),unidade:String(F.unit).trim(),conteudo:{rep:F.who==="rep",respondente:F.name,staff:F.staff,a:a}})}catch(e){r={error:{code:"net"}}}SENDING=false;
 if(r.error){window._e=[r.error.code==="23505"?"Já existe uma resposta para esta unidade nesta visita.":r.error.code==="42501"?"O prazo para responder esta visita terminou.":r.error.code==="54000"?"Muitos envios neste momento. Aguarde alguns minutos e tente de novo.":"Não foi possível enviar agora. Tente novamente."];render();return}
-done=true;try{localStorage.removeItem("calper_v3")}catch(e){}render()}
+window._e=null;done=true;try{localStorage.removeItem("calper_v3")}catch(e){}render()}
 function another(){F={who:F.who,name:F.name,inv:F.inv};step=1;done=false;save();render()}
 /* VISÃO DO ADMIN */
 function stats(list,inv){var c=list.filter(function(r){return r.complete}),o={n:c.length,part:list.length-c.length,inv:inv,avg:{},dist:{}};
-Object.keys(LAB).forEach(function(k){var d=[0,0,0,0,0];c.forEach(function(r){var v=+r.a[k];if(v)d[5-v]++});var t=d.reduce(function(a,b){return a+b},0);o.dist[k]=d;o.avg[k]=t?d.reduce(function(a,x,i){return a+x*(5-i)},0)/t:0});
+Object.keys(LAB).forEach(function(k){var d=[0,0,0,0,0];c.forEach(function(r){var v=SC.indexOf(r.a[k]);v=v>=0?5-v:+r.a[k];if(v>=1&&v<=5)d[5-v]++});var t=d.reduce(function(a,b){return a+b},0);o.dist[k]=d;o.avg[k]=t?d.reduce(function(a,x,i){return a+x*(5-i)},0)/t:0});
 o.hora=c.length?c.filter(function(r){return r.a.hora==="Sim"}).length/c.length*100:0;o.ind=c.length?c.filter(function(r){return r.a.ind==="Sim"}).length/c.length*100:0;
 o.rep=c.filter(function(r){return r.rep}).length;o.com=c.filter(function(r){return r.a.fortes||r.a.melh});return o}
 function setAdm(a){adm=a;render()}
-function rAdmin(){var h='<div class="sub2">'+ADMTABS().map(function(x){return '<button class="'+(adm===x[0]?"on":"")+'" onclick="setAdm(\''+x[0]+'\')">'+x[1]+"</button>"}).join("")+"</div>";
+function rAdmin(){var h='<div class="sub2">'+ADMTABS().map(function(x){return '<button class="'+(adm===x[0]?"on":"")+'" onclick="setAdm(\''+x[0]+'\')">'+x[1]+"</button>"}).join("")+'<span class="sub noprint" style="margin:0 0 0 auto;align-self:center;font-size:12px">'+(CONN?"":'<b style="color:var(--red)">Sem conexão · </b>')+'Atualizado às '+p2(LASTUP.getHours())+":"+p2(LASTUP.getMinutes())+'</span><button class="btn ghost sm noprint" onclick="refresh(true)">'+(UPD?"Atualizando…":"↻ Atualizar")+"</button></div>";
 return h+(adm==="ov"?rOv():adm==="new"?rNew():adm==="rep"?rRep():rQR())}
 function rOv(){var tn=0,ti=0,tr=0,ind=0,ns=0,rows="";
 EV.forEach(function(e){e.ss.forEach(function(s){var t=stats(R[s.id],s.inv);tn+=t.n;if(s.inv){ti+=s.inv;tr+=t.n}ind+=t.n*t.ind/100;ns++;
-rows+="<tr><td><b>"+esc(e.n)+"</b></td><td>"+s.f+'</td><td><span class="tag'+(s.st==="Encerrada"?" cl":"")+'">'+s.st+'</span></td><td class="n">'+(s.inv||"—")+'</td><td class="n">'+t.n+'</td><td class="n">'+(s.inv?Math.round(t.n/s.inv*100)+"%":"—")+'</td><td class="n">'+t.ind.toFixed(0)+'%</td><td class="n"><button class="btn ghost sm" onclick="openRep(\''+e.id+"','"+s.id+'\')">Relatório</button> <button class="btn ghost sm" onclick="qrS=\''+s.id+"';setAdm('qr')\">QR</button></td></tr>"})});
-var h='<div class="kpis"><div class="kpi"><b>'+EV.length+'</b><span>empreendimentos</span></div><div class="kpi"><b>'+ns+'</b><span>sessões de visita</span></div><div class="kpi"><b>'+tn+'</b><span>respostas concluídas</span></div><div class="kpi r"><b>'+(ti?Math.round(tr/ti*100)+"%":"—")+'</b><span>taxa de resposta geral</span></div><div class="kpi"><b>'+(tn?Math.round(ind/tn*100):0)+'%</b><span>indicariam a Calper</span></div></div>';
-return h+'<div class="card"><h3 style="margin-bottom:10px">Empreendimentos e visitas</h3><div class="scroll"><table><tr><th>Empreendimento</th><th>Visita</th><th>Status</th><th class="n">Convidados</th><th class="n">Respostas</th><th class="n">Taxa</th><th class="n">Indicaria</th><th></th></tr>'+rows+"</table></div></div>"}
+rows+="<tr><td><b>"+esc(e.n)+"</b></td><td>"+s.f+'</td><td><span class="tag'+(s.st==="Encerrada"?" cl":"")+'">'+s.st+'</span></td><td class="n">'+(s.inv||"—")+'</td><td class="n">'+t.n+'</td><td class="n">'+(s.inv?Math.round(t.n/s.inv*100)+"%":"—")+'</td><td class="n">'+(t.n?t.ind.toFixed(0)+"%":"—")+'</td><td class="n"><button class="btn ghost sm" onclick="openRep(\''+e.id+"','"+s.id+'\')">Relatório</button> <button class="btn ghost sm" onclick="qrS=\''+s.id+"';setAdm('qr')\">QR</button>"+(ROLE==="admin"?' <button class="btn ghost sm" onclick="editV(\''+s.id+'\')">Editar</button>':"")+"</td></tr>"})});
+var h='<div class="kpis"><div class="kpi"><b>'+EV.length+'</b><span>empreendimentos</span></div><div class="kpi"><b>'+ns+'</b><span>sessões de visita</span></div><div class="kpi"><b>'+tn+'</b><span>respostas concluídas</span></div><div class="kpi r"><b>'+(ti?Math.round(tr/ti*100)+"%":"—")+'</b><span>taxa de resposta geral</span></div><div class="kpi"><b>'+(tn?Math.round(ind/tn*100)+"%":"—")+'</b><span>indicariam a Calper</span></div></div>';
+return h+rEd()+'<div class="card"><h3 style="margin-bottom:10px">Empreendimentos e visitas</h3><div class="scroll"><table><tr><th>Empreendimento</th><th>Visita</th><th>Status</th><th class="n">Convidados</th><th class="n">Respostas</th><th class="n">Taxa</th><th class="n">Indicaria</th><th></th></tr>'+rows+"</table></div></div>"}
 function pdfRep(){var e=EV.filter(function(x){return x.id===repEv})[0],l=view==="all"?"Consolidado":view==="cmp"?"Comparativo":(S(view)?S(view).s.l:""),t=document.title;
 document.title=("Relatorio - "+e.n+" - "+l).replace(/[\/:*?"<>|]/g,"-");
 var back=function(){document.title=t;window.removeEventListener("afterprint",back)};window.addEventListener("afterprint",back);window.print()}
+function dtl(fe){var f=new Date(new Date(fe).getTime()-108e5);return f.getUTCFullYear()+"-"+p2(f.getUTCMonth()+1)+"-"+p2(f.getUTCDate())+"T"+p2(f.getUTCHours())+":"+p2(f.getUTCMinutes())}
+function editV(id){var x=S(id);if(!x)return;ED={id:id,t:x.e.n+" · "+x.s.f,d:x.s.iso||"",f:x.s.fe?dtl(x.s.fe):"",i:String(x.s.inv||0),m:[],busy:false};render();var c=document.getElementById("edcard");if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"})}
+function rEd(){if(!ED)return"";var h='<div class="card" id="edcard"><h3 style="margin-bottom:4px">Editar visita</h3><p class="sub">'+esc(ED.t)+'</p><div class="row2"><div class="q"><label for="ed_d">Data da visita</label><input type="date" id="ed_d" value="'+esc(ED.d)+'" oninput="ED.d=this.value"></div><div class="q"><label for="ed_f">Prazo para responder</label><input type="datetime-local" id="ed_f" value="'+esc(ED.f)+'" oninput="ED.f=this.value"></div></div><div class="q"><label for="ed_i">Investidores convidados</label><input type="number" min="0" id="ed_i" value="'+esc(ED.i)+'" oninput="ED.i=this.value"></div>';
+(ED.m||[]).forEach(function(m){h+='<p class="err">'+esc(m)+'</p>'});
+return h+'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn"'+(ED.busy?" disabled":"")+' onclick="saveV()">'+(ED.busy?"Salvando…":"Salvar alterações")+'</button><button class="btn ghost" onclick="ED=null;render()">Cancelar</button></div><p class="sub" style="margin:10px 0 0">O QR code e o link desta visita continuam os mesmos.</p></div>'}
+async function saveV(){if(!ED||ED.busy)return;var m=[];if(!ED.d)m.push("Informe a data da visita.");if(!ED.f)m.push("Informe o prazo para responder.");
+if(ED.d&&ED.f&&new Date(ED.f+":00-03:00")<=new Date(ED.d+"T00:00:00-03:00"))m.push("O prazo deve ser posterior à data da visita.");
+if(m.length){ED.m=m;render();return}
+ED.busy=true;ED.m=[];render();var r;
+try{r=await DB.from("visitas").update({data_visita:ED.d,fecha_em:ED.f+":00-03:00",convidados:parseInt(ED.i,10)||0}).eq("id",ED.id).select("id")}catch(e){r={error:{message:"sem conexão"}}}
+if(r.error||!r.data||!r.data.length){ED.busy=false;ED.m=[r.error?"Não foi possível salvar: "+r.error.message:"Não foi possível salvar. Verifique se o seu usuário tem permissão para editar visitas no Supabase."];render();return}
+ED=null;await refresh(true)}
+function rMan(l){if(ROLE!=="admin"||!l||!l.length)return"";DEL=l;
+var rows=l.map(function(r,i){var vl=(r.v&&S(r.v))?S(r.v).s.l:"";return"<tr><td>"+esc(r.name)+(r.rep?' <span class="tag cl">Representante</span>':"")+"</td><td>"+esc(r.block)+" · "+esc(r.unit)+"</td><td>"+esc(vl)+'</td><td class="n"><button class="btn ghost sm" onclick="delResp('+i+')">Excluir</button></td></tr>'}).join("");
+return'<details class="card noprint"'+(MANOPEN?" open":"")+' ontoggle="MANOPEN=this.open"><summary>Gerenciar respostas ('+l.length+')</summary><p class="sub" style="margin:8px 0">Use para remover respostas de teste ou lançadas por engano. A exclusão é definitiva.</p><div class="scroll"><table><tr><th>Investidor</th><th>Bloco · Unidade</th><th>Visita</th><th></th></tr>'+rows+"</table></div></details>"}
+async function delResp(i){var r=DEL[i];if(!r)return;if(!confirm("Excluir a resposta de "+r.name+" (Bloco "+r.block+" · Unidade "+r.unit+")?\nEsta ação é definitiva."))return;
+var q;try{q=await DB.from("respostas").delete().eq("visita_id",r.v).eq("nome",r.name).eq("bloco",r.block).eq("unidade",r.unit).select("nome")}catch(e){q={error:{message:"sem conexão"}}}
+if(q.error||!q.data||!q.data.length){alert(q.error?"Não foi possível excluir: "+q.error.message:"Não foi possível excluir. Verifique se o seu usuário tem permissão de exclusão no Supabase.");return}
+await refresh(true)}
 function openRep(e,s){repEv=e;view=s;setAdm("rep")}
 function setEv(e){repEv=e;view=EV.filter(function(x){return x.id===e})[0].ss[0].id;render()}
 function setView(v){view=v;render()}
@@ -175,22 +197,22 @@ function rRep(){var e=EV.filter(function(x){return x.id===repEv})[0],multi=e.ss.
 var h='<div class="sub2"><select aria-label="Empreendimento" onchange="setEv(this.value)">'+EV.map(function(x){return '<option value="'+x.id+'"'+(x.id===repEv?" selected":"")+">"+esc(x.n)+"</option>"}).join("")+"</select>"+e.ss.map(function(s){return '<button class="'+(view===s.id?"on":"")+'" onclick="setView(\''+s.id+'\')">'+s.l+"</button>"}).join("")+(multi?'<button class="'+(view==="all"?"on":"")+'" onclick="setView(\'all\')">Consolidado</button><button class="'+(view==="cmp"?"on":"")+'" onclick="setView(\'cmp\')">Comparativo</button>':"")+'<button class="btn ghost sm noprint" style="margin-left:auto" onclick="pdfRep()">Baixar relatório em PDF</button></div>';
 if(view==="cmp"){var st=e.ss.map(function(s){return stats(R[s.id],s.inv)}),f=st[0],l=st[st.length-1];
 h+='<div class="card"><h3>Comparativo entre as visitas</h3><p class="sub">Notas médias (1 a 5). A variação compara a última visita com a primeira.</p><div class="scroll"><table><tr><th>Quesito</th>'+e.ss.map(function(s){return '<th class="n">'+s.l+"</th>"}).join("")+'<th class="n">Variação</th></tr>';
-Object.keys(LAB).forEach(function(k){var d=l.avg[k]-f.avg[k];h+="<tr><td>"+LAB[k]+"</td>"+st.map(function(x){return '<td class="n">'+x.avg[k].toFixed(2)+"</td>"}).join("")+'<td class="n '+(d>=0?"up":"down")+'">'+(d>=0?"+":"")+d.toFixed(2)+"</td></tr>"});
-[["hora","Atendido no horário"],["ind","Indicaria a Calper"]].forEach(function(p){var d=l[p[0]]-f[p[0]];h+="<tr><td>"+p[1]+"</td>"+st.map(function(x){return '<td class="n">'+x[p[0]].toFixed(0)+"%</td>"}).join("")+'<td class="n '+(d>=0?"up":"down")+'">'+(d>=0?"+":"")+d.toFixed(0)+" pp</td></tr>"});return h+"</table></div></div>"}
+Object.keys(LAB).forEach(function(k){var ok=f.n&&l.n,d=l.avg[k]-f.avg[k];h+="<tr><td>"+LAB[k]+"</td>"+st.map(function(x){return '<td class="n">'+(x.avg[k]?x.avg[k].toFixed(2):"—")+"</td>"}).join("")+'<td class="n '+(ok?(d>=0?"up":"down"):"")+'">'+(ok?(d>=0?"+":"")+d.toFixed(2):"—")+"</td></tr>"});
+[["hora","Atendido no horário"],["ind","Indicaria a Calper"]].forEach(function(p){var ok=f.n&&l.n,d=l[p[0]]-f[p[0]];h+="<tr><td>"+p[1]+"</td>"+st.map(function(x){return '<td class="n">'+(x.n?x[p[0]].toFixed(0)+"%":"—")+"</td>"}).join("")+'<td class="n '+(ok?(d>=0?"up":"down"):"")+'">'+(ok?(d>=0?"+":"")+d.toFixed(0)+" pp":"—")+"</td></tr>"});return h+"</table></div></div>"}
 var s,t,inv,sub="";
 if(view==="all"){var all=[],tot=0,u={};e.ss.forEach(function(x){all=all.concat(R[x.id]);tot+=x.inv});all.filter(function(r){return r.complete}).forEach(function(r){u[r.name.toLowerCase()]=1});s=stats(all,tot);t=e.n+" · consolidado";inv=Object.keys(u).length;sub="Um investidor com mais de uma unidade conta como uma pessoa, com avaliações separadas."}
 else{var x=S(view);s=stats(R[view],x.s.inv);t=e.n+" · "+x.s.f;sub=x.s.st==="Encerrada"?"Relatório gerado automaticamente no encerramento ("+x.s.c+").":"Prévia parcial. O relatório final é gerado automaticamente em "+x.s.c+"."}
-h+='<div class="grid2"><div><div class="card"><h2 class="evtag">'+esc(t)+'</h2><p class="sub" style="margin:4px 0 0">'+sub+'</p><p class="onlyprint sub" style="margin:6px 0 0">Gerado em '+new Date().toLocaleDateString("pt-BR")+"</p></div>";
-h+='<div class="kpis"><div class="kpi"><b>'+s.n+"</b><span>respostas concluídas"+(inv?" · "+inv+" investidores únicos":"")+'</span></div><div class="kpi r"><b>'+(s.inv?Math.round(s.n/s.inv*100)+"%":"—")+"</b><span>taxa de resposta"+(s.inv?" ("+s.n+" de "+s.inv+")":" (convidados não informados)")+'</span></div><div class="kpi"><b>'+s.ind.toFixed(0)+'%</b><span>indicariam a Calper</span></div><div class="kpi"><b>'+s.hora.toFixed(0)+'%</b><span>atendidos no horário</span></div></div>';
+var lst=view==="all"?all:R[view];h+='<div class="grid2"><div><div class="card"><h2 class="evtag">'+esc(t)+'</h2><p class="sub" style="margin:4px 0 0">'+sub+'</p><p class="onlyprint sub" style="margin:6px 0 0">Gerado em '+new Date().toLocaleDateString("pt-BR")+"</p></div>";
+h+='<div class="kpis"><div class="kpi"><b>'+s.n+"</b><span>respostas concluídas"+(inv?" · "+inv+" investidores únicos":"")+'</span></div><div class="kpi r"><b>'+(s.inv?Math.round(s.n/s.inv*100)+"%":"—")+"</b><span>taxa de resposta"+(s.inv?" ("+s.n+" de "+s.inv+")":" (convidados não informados)")+'</span></div><div class="kpi"><b>'+(s.n?s.ind.toFixed(0)+"%":"—")+'</b><span>indicariam a Calper</span></div><div class="kpi"><b>'+(s.n?s.hora.toFixed(0)+"%":"—")+'</b><span>atendidos no horário</span></div></div>';
 h+='<div class="card"><h3 style="margin-bottom:8px">Avaliação por quesito</h3><div class="legend">'+SC.map(function(z,i){return '<span><s style="background:var(--c'+(5-i)+')"></s>'+z+"</span>"}).join("")+"</div>";
-Object.keys(LAB).forEach(function(k){var d=s.dist[k],tt=d.reduce(function(a,b){return a+b},0)||1;h+='<div class="dist"><div class="name"><span>'+LAB[k]+"</span><b>"+s.avg[k].toFixed(2)+'</b></div><div class="stack">'+d.map(function(c,i){return '<i style="width:'+c/tt*100+"%;background:var(--c"+(5-i)+')" title="'+SC[i]+": "+c+'"></i>'}).join("")+"</div></div>"});
+Object.keys(LAB).forEach(function(k){var d=s.dist[k],tt=d.reduce(function(a,b){return a+b},0)||1;h+='<div class="dist"><div class="name"><span>'+LAB[k]+"</span><b>"+(s.avg[k]?s.avg[k].toFixed(2):"—")+'</b></div><div class="stack">'+d.map(function(c,i){return '<i style="width:'+c/tt*100+"%;background:var(--c"+(5-i)+')" title="'+SC[i]+": "+c+'"></i>'}).join("")+"</div></div>"});
 h+='</div></div><div><div class="card cmcard"><h3 style="margin-bottom:10px">Comentários</h3>';
 if(!s.com.length)h+='<p class="sub">Nenhum comentário ainda.</p>';
 var cm=s.com.slice().sort(function(a,b){return(a.block+"").localeCompare(b.block+"",undefined,{numeric:true})||(a.unit+"").localeCompare(b.unit+"",undefined,{numeric:true})||(a.name+"").localeCompare(b.name+"")});
 if(cm.length)h+='<p class="sub" style="margin:0 0 10px">'+cm.length+(cm.length>1?" investidores com comentários":" investidor com comentário")+", ordenados por bloco e unidade.</p><div class=\"cmlist\">";
 cm.forEach(function(r){var vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";h+='<div class="cm"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(r.rep?'<span class="tag cl">Representante'+(r.resp?": "+esc(r.resp):"")+"</span>":"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+"</div>"+(r.a.fortes?"<blockquote><b>Ponto forte:</b> "+esc(r.a.fortes)+"</blockquote>":"")+(r.a.melh?"<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>":"")+"</div>"});
 if(cm.length)h+="</div>";
-return h+"</div></div></div>"}
+return h+"</div></div></div>"+rMan(lst)}
 
 var flash="",N={n:"",d1:"",d2:"",i:"",h:"10:00"},NEWEV=[];
 try{NEWEV=JSON.parse(localStorage.getItem("calper_newev")||"[]")}catch(e){}
@@ -211,7 +233,7 @@ if(e)eid=e.id;else{var r=await DB.from("empreendimentos").insert({nome:nm}).sele
 var rows=ds.map(function(d){return{empreendimento_id:eid,titulo:nm,data_visita:d,convidados:parseInt(N.i,10)||0,fecha_em:fechaIso(d,N.h)}});
 var r2=await DB.from("visitas").insert(rows).select("id");
 if(r2.error){window._m=["Não foi possível criar a visita: "+r2.error.message];render();return}
-await loadAll();qrS=r2.data[0].id;repEv=eid;view=qrS;
+if(!(await loadAll())){alert("Evento criado, mas não foi possível atualizar a lista. Toque em Atualizar.");adm="ov";render();return}qrS=r2.data[0].id;repEv=eid;view=qrS;
 flash="Evento criado: "+esc(nm)+" com "+ds.length+(ds.length>1?" visitas":" visita")+". Cada visita tem o próprio QR code. Escolha a visita abaixo para exibir ou imprimir.";
 N={n:"",d1:"",d2:"",i:"",h:"10:00"};adm="qr";render()}
 function nf(k,l,t,x){return '<div class="q"><label for="n_'+k+'">'+l+'</label><input type="'+t+'" id="n_'+k+'" value="'+esc(N[k])+'" oninput="N.'+k+'=this.value"'+(x||"")+'></div>'}
@@ -223,35 +245,44 @@ h+='<p class="sub">Cada data vira uma visita com QR code, prazo e relatório pr�
 (window._m||[]).forEach(function(m){h+='<p class="err">'+m+'</p>'});window._m=null;
 return h+'<button class="btn" onclick="mkEv()">Criar evento</button></div><div class="card"><h3 style="margin-bottom:8px">Onde os dados ficam salvos</h3><p class="sub" style="margin:0 0 10px">Eventos, visitas e respostas são gravados no banco de dados na nuvem e ficam disponíveis para toda a equipe autorizada.</p><p class="sub" style="margin:0">O prazo de resposta é validado pelo banco: depois do horário de fechamento, novas respostas são recusadas.</p></div></div>'}
 function setQ(v){qrS=v;render()}
-function rQR(){var x=S(qrS),fl=flash;flash="";return (fl?'<p class="note">'+fl+'</p>':'')+'<div class="card"><div class="sub2"><select aria-label="Sessão" onchange="setQ(this.value)">'+opts(qrS)+'</select></div><div class="qr"><div id="qrbox"></div><div><h3 class="etq">'+esc(x.e.n)+"</h3><p class=\"sub\" style=\"margin:2px 0 10px\">"+x.s.f+'<br>Prazo para responder: '+x.s.c+'<br><small style="word-break:break-all">'+esc(linkOf(qrS))+'</small></p><button class="btn" onclick="window.open(linkOf(qrS))">Ver como investidor</button></div></div></div><p class="note">Cada visita tem o próprio QR code, prazo e respostas. Exiba no credenciamento para o investidor responder durante a visita ou ao final. Use “Ver como investidor” para simular o que abre ao escanear o QR code.</p>'}
-function drawQR(){var b=document.getElementById("qrbox");if(b&&window.QRCode)new QRCode(b,{text:linkOf(qrS),width:140,height:140})}
+function rQR(){var x=S(qrS),fl=flash;flash="";return (fl?'<p class="note">'+fl+'</p>':'')+'<div class="card"><div class="sub2"><select aria-label="Sessão" onchange="setQ(this.value)">'+opts(qrS)+'</select></div><div class="qr"><div id="qrbox"></div><div><h3 class="etq">'+esc(x.e.n)+"</h3><p class=\"sub\" style=\"margin:2px 0 10px\">"+x.s.f+'<br>Prazo para responder: '+x.s.c+'<br><small style="word-break:break-all">'+esc(linkOf(qrS))+'</small></p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="window.open(linkOf(qrS))">Ver como investidor</button><button class="btn ghost" onclick="printQR()">Imprimir QR code</button></div></div></div></div>'+'<div class="onlyprint qrposter" style="text-align:center;padding-top:30px"><h1 style="font-size:38px;margin:0 0 6px">'+esc(x.e.n)+'</h1><p style="font-size:18px;margin:0 0 20px">Visita de '+x.s.f+'</p><div id="qrbig" style="display:inline-block"></div><h2 style="font-size:30px;margin:22px 0 6px">Avalie a sua visita</h2><p style="font-size:18px;margin:0 0 6px">Aponte a câmera do celular para o QR code e responda a pesquisa.</p><p style="font-size:14px;color:#666;margin:0">Prazo para responder: '+x.s.c+'</p></div><p class="note">Cada visita tem o próprio QR code, prazo e respostas. Exiba no credenciamento para o investidor responder durante a visita ou ao final. Use “Ver como investidor” para simular o que abre ao escanear o QR code.</p>'}
+function printQR(){var x=S(qrS),t=document.title,b=document.body;b.classList.add("pq");document.title=("QR code - "+x.e.n+" - "+x.s.l).replace(/[\\/:*?"<>|]/g,"-");
+var back=function(){b.classList.remove("pq");document.title=t;window.removeEventListener("afterprint",back)};window.addEventListener("afterprint",back);window.print()}
+function drawQR(){var b=document.getElementById("qrbox");if(b&&window.QRCode)new QRCode(b,{text:linkOf(qrS),width:140,height:140});var g=document.getElementById("qrbig");if(g&&window.QRCode)new QRCode(g,{text:linkOf(qrS),width:540,height:540})}
 
 var SB_URL="https://rkzqbntxfrjvnhonolhy.supabase.co",SB_KEY="sb_publishable_6KAhlJAh5otGxpTjWBYqcQ_axtenClr";
-var DB=supabase.createClient(SB_URL,SB_KEY),SESSION=null,ROLE=null,LOAD=false,LGERR="",LGE="";
+var DBA=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:"calper-anon"}}),DB=supabase.createClient(SB_URL,SB_KEY),SESSION=null,ROLE=null,LOAD=false,LGERR="",LGE="";
 function linkOf(id){return location.href.split("#")[0]+"#"+id}
 function fechaIso(d,h){var n=new Date(new Date(d+"T12:00:00").getTime()+864e5);return n.getFullYear()+"-"+p2(n.getMonth()+1)+"-"+p2(n.getDate())+"T"+(h||"10:00")+":00-03:00"}
 function cTxt(fe){var f=new Date(new Date(fe).getTime()-108e5);return WD[f.getUTCDay()].toLowerCase()+" "+p2(f.getUTCDate())+"/"+p2(f.getUTCMonth()+1)+" às "+hhmm(p2(f.getUTCHours())+":"+p2(f.getUTCMinutes()))}
-function mkSdb(v){var s=mkS(v.id,v.data_visita,v.convidados||0,"");s.iso=v.data_visita;s.c=cTxt(v.fecha_em);s.st=new Date(v.fecha_em)>new Date()?"Aberta":"Encerrada";return s}
+function mkSdb(v){var s=mkS(v.id,v.data_visita,v.convidados||0,"");s.iso=v.data_visita;s.fe=v.fecha_em;s.c=cTxt(v.fecha_em);s.st=new Date(v.fecha_em)>new Date()?"Aberta":"Encerrada";return s}
 function ADMTABS(){return[["ov","Visão geral"]].concat(ROLE==="admin"?[["new","Novo evento"]]:[]).concat([["rep","Relatórios"],["qr","QR codes"]])}
 function rLogin(){return '<div class="card"><h3 style="margin-bottom:12px">Acesso da equipe</h3><div class="q"><label for="lg_e">E-mail</label><input type="text" id="lg_e" autocomplete="username" value="'+esc(LGE)+'"></div><div class="q"><label for="lg_s">Senha</label><input type="password" id="lg_s" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')login()"></div>'+(LGERR?'<p class="err">'+esc(LGERR)+'</p>':'')+'<button class="btn" onclick="login()">Entrar</button></div>'}
 function rAdminGate(){if(LOAD)return '<div class="card center"><p class="sub">Carregando…</p></div>';if(!SESSION)return rLogin();
 if(!ROLE)return '<div class="card center"><h2>Sem permissão</h2><p class="sub">Seu usuário ainda não foi liberado. Fale com o administrador.</p></div>';
-if(!EV.length&&ROLE!=="admin")return '<div class="card center"><p class="sub">Nenhum evento cadastrado ainda.</p></div>';
+if(LOADFAIL&&!EV.length)return '<div class="card center"><h2>Não foi possível carregar</h2><p class="sub">Verifique a conexão e tente novamente.</p><button class="btn" onclick="boot()">Tentar novamente</button></div>';if(!EV.length&&ROLE!=="admin")return '<div class="card center"><p class="sub">Nenhum evento cadastrado ainda.</p></div>';
 if(!EV.length)adm="new";return rAdmin()}
 async function login(){LGE=document.getElementById("lg_e").value.trim();var r=await DB.auth.signInWithPassword({email:LGE,password:document.getElementById("lg_s").value});
 if(r.error){LGERR="E-mail ou senha incorretos.";render();return}LGERR="";await boot()}
 async function logout(){await DB.auth.signOut();SESSION=null;ROLE=null;EV=[];R={};render()}
 async function loadAll(){var a=await DB.from("empreendimentos").select("id,nome").order("nome"),b=await DB.from("visitas").select("id,empreendimento_id,data_visita,fecha_em,convidados").order("data_visita"),c=await DB.from("respostas").select("visita_id,nome,bloco,unidade,conteudo").limit(1000);
-EV=[];R={};(a.data||[]).forEach(function(e){var ss=(b.data||[]).filter(function(v){return v.empreendimento_id===e.id}).map(mkSdb);if(ss.length){EV.push({id:e.id,n:e.nome,ss:ss});ss.forEach(function(x){R[x.id]=[]})}});
+if(a.error||b.error||c.error)return false;EV=[];R={};(a.data||[]).forEach(function(e){var ss=(b.data||[]).filter(function(v){return v.empreendimento_id===e.id}).map(mkSdb);if(ss.length){EV.push({id:e.id,n:e.nome,ss:ss});ss.forEach(function(x){R[x.id]=[]})}});
 (c.data||[]).forEach(function(r){if(R[r.visita_id])R[r.visita_id].push({v:r.visita_id,resp:r.conteudo.respondente||"",name:r.nome,rep:!!r.conteudo.rep,block:r.bloco||"",unit:r.unidade||"",complete:true,a:r.conteudo.a||{}})});
-if(EV.length){if(!EV.some(function(e){return e.id===repEv}))repEv=EV[0].id;var e=EV.filter(function(x){return x.id===repEv})[0];if(view!=="all"&&view!=="cmp"&&!(S(view)&&S(view).e.id===repEv))view=e.ss[0].id;if(!S(qrS))qrS=e.ss[0].id}}
+if(EV.length){if(!EV.some(function(e){return e.id===repEv}))repEv=EV[0].id;var e=EV.filter(function(x){return x.id===repEv})[0];if(view!=="all"&&view!=="cmp"&&!(S(view)&&S(view).e.id===repEv))view=e.ss[0].id;if(!S(qrS))qrS=e.ss[0].id}return true}
 async function loadVisita(){var r=await DB.rpc("obter_visita",{p_visita:cur}),v=r.data&&r.data[0];EV=[];R={};
 if(v){var s=mkS(v.id,v.data_visita,0,"");s.c=cTxt(v.fecha_em);s.st=v.aberta?"Aberta":"Encerrada";EV=[{id:"x",n:v.empreendimento,ss:[s]}];R[cur]=[]}}
 async function boot(){if(tp==="inv"){LOAD=true;render();await loadVisita();LOAD=false;render();return}
 var g=await DB.auth.getSession();SESSION=g.data.session;
-if(SESSION){var p=await DB.from("perfis").select("papel").eq("user_id",SESSION.user.id).maybeSingle();ROLE=p.data?p.data.papel:null;if(ROLE){LOAD=true;render();await loadAll();LOAD=false}}render()}
+if(SESSION){var p=await DB.from("perfis").select("papel").eq("user_id",SESSION.user.id).maybeSingle();ROLE=p.data?p.data.papel:null;if(ROLE){LOAD=true;render();LOADFAIL=!(await loadAll());LOAD=false}}render()}
 var _r=render;render=function(){_r();var t=document.getElementById("tabs");t.innerHTML=(tp==="adm"&&SESSION)?'<button onclick="logout()">Sair</button>':""};
 window.addEventListener("hashchange",function(){location.reload()});
+var LASTUP=new Date(),UPD=false,LOADFAIL=false,CONN=true,SENDING=false,ED=null,DEL=[],MANOPEN=false;
+async function refresh(manual){if(UPD||tp!=="adm"||!SESSION||!ROLE)return;UPD=true;if(manual)render();var ok=false;
+try{var g=await DB.auth.getSession();if(!g.data.session){UPD=false;SESSION=null;ROLE=null;EV=[];R={};render();return}ok=await loadAll()}catch(e){}
+UPD=false;CONN=ok;if(ok)LASTUP=new Date();var a=document.activeElement,tg=a?a.tagName:"";
+if(!manual&&(tg==="SELECT"||tg==="INPUT"||tg==="TEXTAREA"))return;if(manual||!ok||adm==="ov"||adm==="rep")render()}
+setInterval(function(){if(!document.hidden&&(adm==="ov"||adm==="rep"))refresh(false)},30000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)refresh(false)});
 boot();
 </script>
 </body>
