@@ -209,7 +209,7 @@ function openRep(e,s){repEv=e;view=s;rstFl();setAdm("rep")}
 function setEv(e){repEv=e;rstFl();view=EV.filter(function(x){return x.id===e})[0].ss[0].id;render()}
 function setView(v){view=v;rstFl();render()}
 var CL=["var(--g1)","var(--g2)","var(--ne)","var(--r2)","var(--r1)"],TX=["#fff","var(--ink)","var(--ink)","var(--ink)","#fff"];
-function bk(b){return String(b==null?"":b).trim().replace(/^0+(?=.)/,"")}
+function blk(b){return String(b==null?"":b).trim().replace(/^0+(?=.)/,"")}
 function nb(v,d){return v.toFixed(d).replace(".",",")}
 function rstFl(){FL={bl:"",who:"",day:"",q:""}}
 function setFl(k,v){FL[k]=v;render()}
@@ -235,9 +235,9 @@ Object.keys(LAB).forEach(function(k){var ok=f.n&&l.n,d=l.avg[k]-f.avg[k];h+="<tr
 var s,t,inv,sub="",all=[],tot=0,u={},idx=-1,x,invT,base,lst,fa,fd=[];
 if(view==="all"){e.ss.forEach(function(z){all=all.concat(R[z.id]);tot+=z.inv});base=all;invT=tot;t=e.n+" · consolidado";sub="Um investidor com mais de uma unidade conta como uma pessoa, com avaliações separadas."}
 else{x=S(view);base=R[view];invT=x.s.inv;idx=e.ss.indexOf(x.s);t=e.n+" · "+x.s.f;sub=x.s.st==="Encerrada"?"Relatório gerado automaticamente no encerramento ("+x.s.c+").":"Prévia parcial. O relatório final é gerado automaticamente em "+x.s.c+"."}
-var bls=[];base.forEach(function(r){var b=bk(r.block);if(b&&bls.indexOf(b)<0)bls.push(b)});bls.sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true})});
+var bls=[];base.forEach(function(r){var b=blk(r.block);if(b&&bls.indexOf(b)<0)bls.push(b)});bls.sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true})});
 if(FL.bl&&bls.indexOf(FL.bl)<0)FL.bl="";
-lst=base.filter(function(r){return(!FL.bl||bk(r.block)===FL.bl)});
+lst=base.filter(function(r){return(!FL.bl||blk(r.block)===FL.bl)});
 fa=!!FL.bl;
 if(FL.bl)fd.push("Bloco "+FL.bl);
 s=stats(lst,fa?0:invT);EXP=lst.filter(function(r){return r.complete});
