@@ -109,6 +109,7 @@ details.card>summary{cursor:pointer;font-weight:600}
 .cmi.low{border-color:var(--r1);border-left:4px solid var(--r1);background:#fdf6f6}
 .cmi .cmh{margin-bottom:0}.cmi blockquote{margin:6px 0 0}
 @media print{.cmi,.dist{break-inside:avoid}}
+.cm.low{border-color:var(--r1);border-left:4px solid var(--r1);background:#fdf6f6}
 </style>
 </head>
 <body>
@@ -218,9 +219,8 @@ function srt(a,b){return(a.block+"").localeCompare(b.block+"",undefined,{numeric
 function lowOf(r){var m=[];if(r.a.ind==="Não")m.push("Não indicaria");Object.keys(LAB).forEach(function(k){if(SC.indexOf(r.a[k])>=3)m.push(LAB[k]+": "+r.a[k])});return m}
 function cmHtml(){var q=FL.q.trim().toLowerCase(),L=CML.filter(function(r){return!q||[r.name,r.resp,r.block,r.unit,r.a.fortes,r.a.melh].join(" ").toLowerCase().indexOf(q)>=0});
 if(!L.length)return'<p class="sub">Nenhum comentário encontrado.</p>';
-function col(k,tit){var c=L.filter(function(r){return r.a[k]}).sort(function(a,b){return(lowOf(b).length>0)-(lowOf(a).length>0)||srt(a,b)});
-return'<div><h4 style="margin:0 0 8px;font-size:.95rem">'+tit+" ("+c.length+')</h4><div class="cmlist">'+(c.length?c.map(function(r){var lw=lowOf(r).length>0,vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";return'<div class="cmi'+(lw?" low":"")+'"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(lw?'<span class="tag bad">Nota baixa</span>':"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+"</div><blockquote>"+esc(r.a[k])+"</blockquote></div>"}).join(""):'<p class="sub">Nenhum.</p>')+"</div></div>"}
-return'<div class="cm2">'+col("fortes","Pontos fortes")+col("melh","Melhorias")+"</div>"}
+L=L.slice().sort(function(a,b){return(lowOf(b).length>0)-(lowOf(a).length>0)||srt(a,b)});
+return'<div class="cmlist">'+L.map(function(r){var lw=lowOf(r).length>0,vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";return'<div class="cm'+(lw?" low":"")+'"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(r.rep?'<span class="tag cl">Representante'+(r.resp?": "+esc(r.resp):"")+"</span>":"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+(lw?'<span class="tag bad">Nota baixa</span>':"")+"</div>"+(r.a.fortes?"<blockquote><b>Ponto forte:</b> "+esc(r.a.fortes)+"</blockquote>":"")+(r.a.melh?"<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>":"")+"</div>"}).join("")+"</div>"}
 function csvExp(){var e=EV.filter(function(z){return z.id===repEv})[0],lb=view==="all"?"Consolidado":(S(view)?S(view).s.l:""),ks=Object.keys(LAB);
 var rows=[["Empreendimento","Visita","Investidor","Quem respondeu","Tipo","Bloco","Unidade","Funcionário"].concat(ks.map(function(k){return LAB[k]}),["Atendido no horário","Indicaria a Calper","Ponto forte","Melhoria"])];
 EXP.forEach(function(r){var vs=r.v&&S(r.v);rows.push([e.n,vs?vs.s.f:"",r.name,r.resp||(r.rep?"":r.name),r.rep?"Representante":"Investidor",r.block,r.unit,r.staff||""].concat(ks.map(function(k){return r.a[k]||""}),[r.a.hora||"",r.a.ind||"",r.a.fortes||"",r.a.melh||""]))});
@@ -271,7 +271,7 @@ h+="</div>";
 CML=s.com;
 h+='<div class="card cmcard"><h3 style="margin-bottom:10px">Comentários</h3>';
 if(!CML.length)h+='<p class="sub">Nenhum comentário ainda.</p>';
-else h+='<div class="noprint" style="margin-bottom:10px"><input type="text" id="cq" aria-label="Buscar nos comentários" placeholder="Buscar por nome, bloco, unidade ou texto…" value="'+esc(FL.q)+'" oninput="FL.q=this.value;document.getElementById(\'cmbox\').innerHTML=cmHtml()"></div><p class="sub" style="margin:0 0 10px">Comentários de quem deu nota baixa aparecem primeiro e em destaque.</p><div id="cmbox">'+cmHtml()+"</div>";
+else h+='<div class="noprint" style="margin-bottom:10px"><input type="text" id="cq" aria-label="Buscar nos comentários" placeholder="Buscar por nome, bloco, unidade ou texto…" value="'+esc(FL.q)+'" oninput="FL.q=this.value;document.getElementById(\'cmbox\').innerHTML=cmHtml()"></div><p class="sub" style="margin:0 0 10px">Cada pesquisa aparece separada por investidor. Quem deu nota baixa vem primeiro, em destaque.</p><div id="cmbox">'+cmHtml()+"</div>";
 return h+"</div>"+rMan(base)}
 
 var flash="",N={n:"",d1:"",d2:"",i:"",h:"10:00"},NEWEV=[];
