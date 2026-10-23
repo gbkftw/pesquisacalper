@@ -94,6 +94,24 @@ input[type=password]{width:100%;font:inherit;padding:11px 12px;border:1.5px soli
 .btn[disabled]{opacity:.6;cursor:default}
 details.card>summary{cursor:pointer;font-weight:600}
 .onlyprint{display:none}@media print{.onlyprint{display:block}}
+:root{--g1:#1f7a4d;--g2:#8fcaa6;--ne:#d4d4d9;--r2:#e6a1a5;--r1:#a42a31}
+.kpi b.sm{font-size:1.05rem;line-height:1.3;padding:4px 0}
+.dh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}.dn{font-weight:500;flex:1;min-width:150px}
+.sat,.avg{font-size:.8rem;color:var(--mut)}.sat b{font-size:1.35rem;color:var(--ink);margin-right:3px}
+.tr{font-size:.8rem;font-weight:600;color:var(--mut)}.tr.up{color:var(--g1)}.tr.dn{color:var(--r1)}
+.dv{position:relative;display:flex;height:26px;background:var(--soft);border-radius:4px;overflow:hidden}
+.dv:after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1.5px solid var(--ink);opacity:.55}
+.dv i{flex:none;display:flex;align-items:center;justify-content:center;font:600 .7rem/1 inherit;font-family:inherit;font-style:normal;white-space:nowrap;overflow:hidden;height:100%}
+.bands{font-size:.8rem;color:var(--mut);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap}.bands b{color:var(--ink)}
+.flt{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.flt select{width:auto;padding:7px 10px;font-size:.88rem}
+.tag.bad{background:#fbe3e4;color:var(--r1)}
+.cm2{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:720px){.cm2{grid-template-columns:1fr 1fr}}
+.cmi{margin-bottom:10px;padding:8px 12px;border:1px solid var(--line);border-radius:8px}
+.cmi.low{border-color:var(--r1);border-left:4px solid var(--r1);background:#fdf6f6}
+.cmi .cmh{margin-bottom:0}.cmi blockquote{margin:6px 0 0}
+@media print{@page{margin:12mm 12mm 16mm;@bottom-center{content:"Página " counter(page);font:10px "IBM Plex Sans",sans-serif;color:#65656d}}
+.cover{break-after:page;padding-top:60mm}.cover h1{font-size:34px;margin:6px 0}.cover h2{font-size:20px;font-weight:500;color:var(--mut);margin-bottom:12px}
+.cmsec{break-before:page}.cm2{grid-template-columns:1fr 1fr}.cmi,.dist{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -120,7 +138,7 @@ var LAB={cord:"Cordialidade",clar:"Clareza das informações",org:"Organização
 var tp=location.hash.length>1?"inv":"adm",adm="ov",cur=location.hash.slice(1),repEv="",view="",qrS="",step=1,F={},done=false;
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function S(id){for(var i=0;i<EV.length;i++)for(var j=0;j<EV[i].ss.length;j++)if(EV[i].ss[j].id===id)return{e:EV[i],s:EV[i].ss[j]}}
-var R={};
+var R={},FL={bl:"",who:"",day:"",q:""},EXP=[],CML=[];
 try{var sv=JSON.parse(localStorage.getItem("calper_v3")||"null");if(sv&&sv.cur===cur){F=sv.F||{};step=sv.step||1}}catch(e){}
 function save(){try{localStorage.setItem("calper_v3",JSON.stringify({F:F,step:step,cur:cur}))}catch(e){}}
 function pct(){var req=["who","name","block","unit"].concat(Q.filter(function(q){return q.y!=="tx"}).map(function(q){return q.k}));if(F.who==="rep")req.push("inv");return Math.round(req.filter(function(k){return F[k]}).length/req.length*100)}
@@ -156,8 +174,8 @@ if(r.error){window._e=[r.error.code==="23505"?"Já existe uma resposta para esta
 window._e=null;done=true;try{localStorage.removeItem("calper_v3")}catch(e){}render()}
 function another(){F={who:F.who,name:F.name,inv:F.inv};step=1;done=false;save();render()}
 /* VISÃO DO ADMIN */
-function stats(list,inv){var c=list.filter(function(r){return r.complete}),o={n:c.length,part:list.length-c.length,inv:inv,avg:{},dist:{}};
-Object.keys(LAB).forEach(function(k){var d=[0,0,0,0,0];c.forEach(function(r){var v=SC.indexOf(r.a[k]);v=v>=0?5-v:+r.a[k];if(v>=1&&v<=5)d[5-v]++});var t=d.reduce(function(a,b){return a+b},0);o.dist[k]=d;o.avg[k]=t?d.reduce(function(a,x,i){return a+x*(5-i)},0)/t:0});
+function stats(list,inv){var c=list.filter(function(r){return r.complete}),o={n:c.length,part:list.length-c.length,inv:inv,avg:{},dist:{},cnt:{},sat:{}};
+Object.keys(LAB).forEach(function(k){var d=[0,0,0,0,0];c.forEach(function(r){var v=SC.indexOf(r.a[k]);v=v>=0?5-v:+r.a[k];if(v>=1&&v<=5)d[5-v]++});var t=d.reduce(function(a,b){return a+b},0);o.dist[k]=d;o.avg[k]=t?d.reduce(function(a,x,i){return a+x*(5-i)},0)/t:0;o.cnt[k]=t;o.sat[k]=t?(d[0]+d[1])/t*100:0});
 o.hora=c.length?c.filter(function(r){return r.a.hora==="Sim"}).length/c.length*100:0;o.ind=c.length?c.filter(function(r){return r.a.ind==="Sim"}).length/c.length*100:0;
 o.rep=c.filter(function(r){return r.rep}).length;o.com=c.filter(function(r){return r.a.fortes||r.a.melh});return o}
 function setAdm(a){adm=a;render()}
@@ -190,29 +208,76 @@ async function delResp(i){var r=DEL[i];if(!r)return;if(!confirm("Excluir a respo
 var q;try{q=await DB.from("respostas").delete().eq("visita_id",r.v).eq("nome",r.name).eq("bloco",r.block).eq("unidade",r.unit).select("nome")}catch(e){q={error:{message:"sem conexão"}}}
 if(q.error||!q.data||!q.data.length){alert(q.error?"Não foi possível excluir: "+q.error.message:"Não foi possível excluir. Verifique se o seu usuário tem permissão de exclusão no Supabase.");return}
 await refresh(true)}
-function openRep(e,s){repEv=e;view=s;setAdm("rep")}
-function setEv(e){repEv=e;view=EV.filter(function(x){return x.id===e})[0].ss[0].id;render()}
-function setView(v){view=v;render()}
+function openRep(e,s){repEv=e;view=s;rstFl();setAdm("rep")}
+function setEv(e){repEv=e;rstFl();view=EV.filter(function(x){return x.id===e})[0].ss[0].id;render()}
+function setView(v){view=v;rstFl();render()}
+var CL=["var(--g1)","var(--g2)","var(--ne)","var(--r2)","var(--r1)"],TX=["#fff","var(--ink)","var(--ink)","var(--ink)","#fff"];
+function nb(v,d){return v.toFixed(d).replace(".",",")}
+function rstFl(){FL={bl:"",who:"",day:"",q:""}}
+function setFl(k,v){FL[k]=v;render()}
+function clrFl(){FL.bl=FL.who=FL.day="";render()}
+function srt(a,b){return(a.block+"").localeCompare(b.block+"",undefined,{numeric:true})||(a.unit+"").localeCompare(b.unit+"",undefined,{numeric:true})||(a.name+"").localeCompare(b.name+"")}
+function lowOf(r){var m=[];if(r.a.ind==="Não")m.push("Não indicaria");Object.keys(LAB).forEach(function(k){if(SC.indexOf(r.a[k])>=3)m.push(LAB[k]+": "+r.a[k])});return m}
+function cmHtml(){var q=FL.q.trim().toLowerCase(),L=CML.filter(function(r){return!q||[r.name,r.resp,r.block,r.unit,r.a.fortes,r.a.melh].join(" ").toLowerCase().indexOf(q)>=0});
+if(!L.length)return'<p class="sub">Nenhum comentário encontrado.</p>';
+function col(k,tit){var c=L.filter(function(r){return r.a[k]}).sort(function(a,b){return(lowOf(b).length>0)-(lowOf(a).length>0)||srt(a,b)});
+return'<div><h4 style="margin:0 0 8px;font-size:.95rem">'+tit+" ("+c.length+')</h4><div class="cmlist">'+(c.length?c.map(function(r){var lw=lowOf(r).length>0,vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";return'<div class="cmi'+(lw?" low":"")+'"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(lw?'<span class="tag bad">Nota baixa</span>':"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+"</div><blockquote>"+esc(r.a[k])+"</blockquote></div>"}).join(""):'<p class="sub">Nenhum.</p>')+"</div></div>"}
+return'<div class="cm2">'+col("fortes","Pontos fortes")+col("melh","Melhorias")+"</div>"}
+function csvExp(){var e=EV.filter(function(z){return z.id===repEv})[0],lb=view==="all"?"Consolidado":(S(view)?S(view).s.l:""),ks=Object.keys(LAB);
+var rows=[["Empreendimento","Visita","Investidor","Quem respondeu","Tipo","Bloco","Unidade","Funcionário"].concat(ks.map(function(k){return LAB[k]}),["Atendido no horário","Indicaria a Calper","Ponto forte","Melhoria"])];
+EXP.forEach(function(r){var vs=r.v&&S(r.v);rows.push([e.n,vs?vs.s.f:"",r.name,r.resp||(r.rep?"":r.name),r.rep?"Representante":"Investidor",r.block,r.unit,r.staff||""].concat(ks.map(function(k){return r.a[k]||""}),[r.a.hora||"",r.a.ind||"",r.a.fortes||"",r.a.melh||""]))});
+var tx="\ufeff"+rows.map(function(rw){return rw.map(function(c){c=String(c==null?"":c);if(/^[=+\-@\t\r]/.test(c))c="'"+c;return'"'+c.replace(/"/g,'""')+'"'}).join(";")}).join("\r\n");
+var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([tx],{type:"text/csv;charset=utf-8"}));a.download=("Respostas - "+e.n+" - "+lb+".csv").replace(/[\/:*?"<>|]/g,"-");document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
 function rRep(){var e=EV.filter(function(x){return x.id===repEv})[0],multi=e.ss.length>1;
-var h='<div class="sub2"><select aria-label="Empreendimento" onchange="setEv(this.value)">'+EV.map(function(x){return '<option value="'+x.id+'"'+(x.id===repEv?" selected":"")+">"+esc(x.n)+"</option>"}).join("")+"</select>"+e.ss.map(function(s){return '<button class="'+(view===s.id?"on":"")+'" onclick="setView(\''+s.id+'\')">'+s.l+"</button>"}).join("")+(multi?'<button class="'+(view==="all"?"on":"")+'" onclick="setView(\'all\')">Consolidado</button><button class="'+(view==="cmp"?"on":"")+'" onclick="setView(\'cmp\')">Comparativo</button>':"")+'<button class="btn ghost sm noprint" style="margin-left:auto" onclick="pdfRep()">Baixar relatório em PDF</button></div>';
+var h='<div class="sub2"><select aria-label="Empreendimento" onchange="setEv(this.value)">'+EV.map(function(x){return '<option value="'+x.id+'"'+(x.id===repEv?" selected":"")+">"+esc(x.n)+"</option>"}).join("")+"</select>"+e.ss.map(function(s){return '<button class="'+(view===s.id?"on":"")+'" onclick="setView(\''+s.id+'\')">'+s.l+"</button>"}).join("")+(multi?'<button class="'+(view==="all"?"on":"")+'" onclick="setView(\'all\')">Consolidado</button><button class="'+(view==="cmp"?"on":"")+'" onclick="setView(\'cmp\')">Comparativo</button>':"")+'<span class="noprint" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">'+(view!=="cmp"?'<button class="btn ghost sm" onclick="csvExp()">Exportar para Excel (CSV)</button>':"")+'<button class="btn ghost sm" onclick="pdfRep()">Baixar relatório em PDF</button></span></div>';
 if(view==="cmp"){var st=e.ss.map(function(s){return stats(R[s.id],s.inv)}),f=st[0],l=st[st.length-1];
 h+='<div class="card"><h3>Comparativo entre as visitas</h3><p class="sub">Notas médias (1 a 5). A variação compara a última visita com a primeira.</p><div class="scroll"><table><tr><th>Quesito</th>'+e.ss.map(function(s){return '<th class="n">'+s.l+"</th>"}).join("")+'<th class="n">Variação</th></tr>';
 Object.keys(LAB).forEach(function(k){var ok=f.n&&l.n,d=l.avg[k]-f.avg[k];h+="<tr><td>"+LAB[k]+"</td>"+st.map(function(x){return '<td class="n">'+(x.avg[k]?x.avg[k].toFixed(2):"—")+"</td>"}).join("")+'<td class="n '+(ok?(d>=0?"up":"down"):"")+'">'+(ok?(d>=0?"+":"")+d.toFixed(2):"—")+"</td></tr>"});
 [["hora","Atendido no horário"],["ind","Indicaria a Calper"]].forEach(function(p){var ok=f.n&&l.n,d=l[p[0]]-f[p[0]];h+="<tr><td>"+p[1]+"</td>"+st.map(function(x){return '<td class="n">'+(x.n?x[p[0]].toFixed(0)+"%":"—")+"</td>"}).join("")+'<td class="n '+(ok?(d>=0?"up":"down"):"")+'">'+(ok?(d>=0?"+":"")+d.toFixed(0)+" pp":"—")+"</td></tr>"});return h+"</table></div></div>"}
-var s,t,inv,sub="";
-if(view==="all"){var all=[],tot=0,u={};e.ss.forEach(function(x){all=all.concat(R[x.id]);tot+=x.inv});all.filter(function(r){return r.complete}).forEach(function(r){u[r.name.toLowerCase()]=1});s=stats(all,tot);t=e.n+" · consolidado";inv=Object.keys(u).length;sub="Um investidor com mais de uma unidade conta como uma pessoa, com avaliações separadas."}
-else{var x=S(view);s=stats(R[view],x.s.inv);t=e.n+" · "+x.s.f;sub=x.s.st==="Encerrada"?"Relatório gerado automaticamente no encerramento ("+x.s.c+").":"Prévia parcial. O relatório final é gerado automaticamente em "+x.s.c+"."}
-var lst=view==="all"?all:R[view];h+='<div class="grid2"><div><div class="card"><h2 class="evtag">'+esc(t)+'</h2><p class="sub" style="margin:4px 0 0">'+sub+'</p><p class="onlyprint sub" style="margin:6px 0 0">Gerado em '+new Date().toLocaleDateString("pt-BR")+"</p></div>";
-h+='<div class="kpis"><div class="kpi"><b>'+s.n+"</b><span>respostas concluídas"+(inv?" · "+inv+" investidores únicos":"")+'</span></div><div class="kpi r"><b>'+(s.inv?Math.round(s.n/s.inv*100)+"%":"—")+"</b><span>taxa de resposta"+(s.inv?" ("+s.n+" de "+s.inv+")":" (convidados não informados)")+'</span></div><div class="kpi"><b>'+(s.n?s.ind.toFixed(0)+"%":"—")+'</b><span>indicariam a Calper</span></div><div class="kpi"><b>'+(s.n?s.hora.toFixed(0)+"%":"—")+'</b><span>atendidos no horário</span></div></div>';
-h+='<div class="card"><h3 style="margin-bottom:8px">Avaliação por quesito</h3><div class="legend">'+SC.map(function(z,i){return '<span><s style="background:var(--c'+(5-i)+')"></s>'+z+"</span>"}).join("")+"</div>";
-Object.keys(LAB).forEach(function(k){var d=s.dist[k],tt=d.reduce(function(a,b){return a+b},0)||1;h+='<div class="dist"><div class="name"><span>'+LAB[k]+"</span><b>"+(s.avg[k]?s.avg[k].toFixed(2):"—")+'</b></div><div class="stack">'+d.map(function(c,i){return '<i style="width:'+c/tt*100+"%;background:var(--c"+(5-i)+')" title="'+SC[i]+": "+c+'"></i>'}).join("")+"</div></div>"});
-h+='</div></div><div><div class="card cmcard"><h3 style="margin-bottom:10px">Comentários</h3>';
-if(!s.com.length)h+='<p class="sub">Nenhum comentário ainda.</p>';
-var cm=s.com.slice().sort(function(a,b){return(a.block+"").localeCompare(b.block+"",undefined,{numeric:true})||(a.unit+"").localeCompare(b.unit+"",undefined,{numeric:true})||(a.name+"").localeCompare(b.name+"")});
-if(cm.length)h+='<p class="sub" style="margin:0 0 10px">'+cm.length+(cm.length>1?" investidores com comentários":" investidor com comentário")+", ordenados por bloco e unidade.</p><div class=\"cmlist\">";
-cm.forEach(function(r){var vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";h+='<div class="cm"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(r.rep?'<span class="tag cl">Representante'+(r.resp?": "+esc(r.resp):"")+"</span>":"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+"</div>"+(r.a.fortes?"<blockquote><b>Ponto forte:</b> "+esc(r.a.fortes)+"</blockquote>":"")+(r.a.melh?"<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>":"")+"</div>"});
-if(cm.length)h+="</div>";
-return h+"</div></div></div>"+rMan(lst)}
+var s,t,inv,sub="",all=[],tot=0,u={},idx=-1,x,invT,base,lst,fa,fd=[];
+if(view==="all"){e.ss.forEach(function(z){all=all.concat(R[z.id]);tot+=z.inv});base=all;invT=tot;t=e.n+" · consolidado";sub="Um investidor com mais de uma unidade conta como uma pessoa, com avaliações separadas."}
+else{x=S(view);base=R[view];invT=x.s.inv;idx=e.ss.indexOf(x.s);t=e.n+" · "+x.s.f;sub=x.s.st==="Encerrada"?"Relatório gerado automaticamente no encerramento ("+x.s.c+").":"Prévia parcial. O relatório final é gerado automaticamente em "+x.s.c+"."}
+if(view!=="all")FL.day="";
+var bls=[];base.forEach(function(r){var b=String(r.block);if(b&&bls.indexOf(b)<0)bls.push(b)});bls.sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true})});
+if(FL.bl&&bls.indexOf(FL.bl)<0)FL.bl="";
+lst=base.filter(function(r){return(!FL.bl||String(r.block)===FL.bl)&&(!FL.who||(FL.who==="rep")===r.rep)&&(!FL.day||r.v===FL.day)});
+fa=!!(FL.bl||FL.who||FL.day);
+if(FL.bl)fd.push("Bloco "+FL.bl);if(FL.who)fd.push(FL.who==="rep"?"representantes":"investidores");if(FL.day&&S(FL.day))fd.push(S(FL.day).s.l);
+s=stats(lst,fa?0:invT);EXP=lst.filter(function(r){return r.complete});
+if(view==="all"){EXP.forEach(function(r){u[r.name.toLowerCase()]=1});inv=Object.keys(u).length}
+var gen=new Date().toLocaleDateString("pt-BR");
+h+='<div class="onlyprint cover"><p class="sub">Pesquisa de satisfação · visita à obra</p><h1>'+esc(e.n)+'</h1><h2>'+esc(view==="all"?"Consolidado das visitas":x.s.f)+'</h2>'+(fa?'<p class="sub">Filtro: '+esc(fd.join(" · "))+"</p>":"")+'<p class="sub">Gerado em '+gen+"</p></div>";
+h+='<div class="card"><h2 class="evtag">'+esc(t)+'</h2><p class="sub" style="margin:4px 0 0">'+sub+(fa?" <b>Filtro: "+esc(fd.join(" · "))+".</b>":"")+'</p><p class="onlyprint sub" style="margin:6px 0 0">Gerado em '+gen+"</p></div>";
+h+='<div class="flt noprint"><span class="sub" style="margin:0">Filtrar:</span><select aria-label="Bloco" onchange="setFl(\'bl\',this.value)"><option value="">Todos os blocos</option>'+bls.map(function(b){return'<option value="'+esc(b)+'"'+(FL.bl===b?" selected":"")+">Bloco "+esc(b)+"</option>"}).join("")+'</select><select aria-label="Respondente" onchange="setFl(\'who\',this.value)"><option value="">Investidores e representantes</option><option value="inv"'+(FL.who==="inv"?" selected":"")+'>Só investidores</option><option value="rep"'+(FL.who==="rep"?" selected":"")+'>Só representantes</option></select>'+(view==="all"&&e.ss.length>1?'<select aria-label="Dia da visita" onchange="setFl(\'day\',this.value)"><option value="">Todos os dias</option>'+e.ss.map(function(z){return'<option value="'+z.id+'"'+(FL.day===z.id?" selected":"")+">"+z.l+"</option>"}).join("")+"</select>":"")+(fa?'<button class="btn ghost sm" onclick="clrFl()">Limpar filtros</button>':"")+"</div>";
+var ks=Object.keys(LAB).filter(function(k){return s.cnt[k]>0}),sc=0,sn=0,sp=0,bk=null,wk=null;
+ks.forEach(function(k){sc+=s.avg[k]*s.cnt[k];sp+=s.sat[k]*s.cnt[k];sn+=s.cnt[k];if(bk===null||s.avg[k]>s.avg[bk])bk=k;if(wk===null||s.avg[k]<s.avg[wk])wk=k});
+h+='<div class="kpis"><div class="kpi"><b>'+(sn?nb(sc/sn,2):"—")+'</b><span>nota geral (escala de 1 a 5)</span></div><div class="kpi"><b>'+(sn?Math.round(sp/sn)+"%":"—")+'</b><span>satisfeitos no geral (Ótimo + Muito bom)</span></div><div class="kpi"><b class="sm">'+(bk?LAB[bk]:"—")+"</b><span>melhor quesito"+(bk?" · média "+nb(s.avg[bk],2):"")+'</span></div><div class="kpi r"><b class="sm">'+(wk?LAB[wk]:"—")+"</b><span>pior quesito"+(wk?" · média "+nb(s.avg[wk],2):"")+"</span></div></div>";
+h+='<div class="kpis"><div class="kpi"><b>'+s.n+"</b><span>respostas concluídas"+(inv?" · "+inv+" investidores únicos":"")+'</span></div><div class="kpi r"><b>'+(s.inv?Math.round(s.n/s.inv*100)+"%":"—")+"</b><span>taxa de resposta"+(s.inv?" ("+s.n+" de "+s.inv+")":fa?" (indisponível com filtro)":" (convidados não informados)")+'</span></div><div class="kpi"><b>'+(s.n?s.ind.toFixed(0)+"%":"—")+'</b><span>indicariam a Calper</span></div><div class="kpi"><b>'+(s.n?s.hora.toFixed(0)+"%":"—")+'</b><span>atendidos no horário</span></div></div>';
+var M=50;ks.forEach(function(k){var d=s.dist[k],c=s.cnt[k];M=Math.max(M,(d[3]+d[4]+d[2]/2)/c*100,(d[0]+d[1]+d[2]/2)/c*100)});
+var P=(!fa&&idx>0)?stats(R[e.ss[idx-1].id],0):null,PL=P?e.ss[idx-1].l:"";
+h+='<div class="grid2"><div class="card"><h3 style="margin-bottom:4px">Avaliação por quesito</h3><p class="sub" style="margin:0 0 8px">Avaliações negativas à esquerda, positivas à direita; “Bom” fica no centro. Cada trecho mostra a quantidade e a porcentagem.</p><div class="legend">'+[4,3,2,1,0].map(function(i){return'<span><s style="background:'+CL[i]+'"></s>'+SC[i]+"</span>"}).join("")+"</div>";
+Object.keys(LAB).forEach(function(k){var d=s.dist[k],c=s.cnt[k],pos=d[0]+d[1],neg=d[3]+d[4],bar="",tr="";
+if(c){var L=(neg+d[2]/2)/c*100;bar='<i class="sp" style="width:'+(M-L)/(2*M)*100+'%"></i>'+[4,3,2,1,0].map(function(i){if(!d[i])return"";var w=d[i]/c*100,ww=w/(2*M)*100,pc=Math.round(w);return'<i style="width:'+ww+"%;background:"+CL[i]+";color:"+TX[i]+'" title="'+SC[i]+": "+d[i]+" ("+pc+'%)">'+(ww>=13?d[i]+" · "+pc+"%":ww>=6?pc+"%":"")+"</i>"}).join("")}
+if(P&&c&&P.cnt[k]>0){var dd=Math.round(s.sat[k]-P.sat[k]);tr=' <span class="tr '+(dd>0?"up":dd<0?"dn":"")+'" title="Satisfeitos em relação a '+PL+'">'+(dd>0?"▲ +"+dd:dd<0?"▼ "+dd:"= 0")+" pp</span>"}
+h+='<div class="dist"><div class="dh"><span class="dn">'+LAB[k]+"</span>"+(c?'<span class="sat"><b>'+Math.round(s.sat[k])+"%</b> satisfeitos</span>"+tr+'<span class="avg">média '+nb(s.avg[k],2)+" de 5</span>":'<span class="avg">sem respostas</span>')+'</div><div class="dv">'+bar+"</div>"+(c?'<div class="bands"><span>Positivo <b>'+Math.round(pos/c*100)+"%</b></span><span>Neutro <b>"+Math.round(d[2]/c*100)+"%</b></span><span>Negativo <b>"+Math.round(neg/c*100)+"%</b></span><span>"+c+(c>1?" respostas":" resposta")+"</span></div>":"")+"</div>"});
+if(P)h+='<p class="sub" style="margin:0">▲▼ comparam o % de satisfeitos com a visita anterior ('+PL+").</p>";
+h+="</div>";
+var ct=lst.filter(function(r){return r.complete&&lowOf(r).length}).sort(srt);
+h+='<div class="card noprint"><h3 style="margin-bottom:4px">Investidores para contato</h3><p class="sub" style="margin:0 0 10px">Responderam “Não” em indicaria ou deram nota Ruim ou Péssimo.</p>';
+if(!ct.length)h+='<p class="sub">Nenhum investidor nesta situação.</p>';
+else h+='<p class="sub" style="margin:0 0 10px"><b>'+ct.length+"</b> para o RI procurar, ordenados por bloco e unidade.</p><div class=\"cmlist\">"+ct.map(function(r){var vl=(view==="all"&&r.v&&S(r.v))?S(r.v).s.l:"";return'<div class="cm"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag">Bloco '+esc(r.block)+" · Unidade "+esc(r.unit)+"</span>"+(r.rep?'<span class="tag cl">Representante'+(r.resp?": "+esc(r.resp):"")+"</span>":"")+(vl?'<span class="tag cl">'+esc(vl)+"</span>":"")+'</div><div class="cmh">'+lowOf(r).map(function(m){return'<span class="tag bad">'+esc(m)+"</span>"}).join("")+"</div>"+(r.a.melh?"<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>":"")+(r.a.fortes?"<blockquote><b>Ponto forte:</b> "+esc(r.a.fortes)+"</blockquote>":"")+"</div>"}).join("")+"</div>";
+h+="</div></div>";
+var sg={},sl=[],ns=0;lst.forEach(function(r){if(!r.complete)return;var n=(r.staff||"").trim();if(!n)return;ns++;var key=n.toLowerCase();if(!sg[key]){sg[key]={n:n,l:[]};sl.push(sg[key])}sg[key].l.push(r)});
+h+='<div class="card"><h3 style="margin-bottom:4px">Resultado por funcionário</h3>';
+if(!ns)h+='<p class="sub" style="margin:0">Nenhuma resposta com o nome do funcionário informado.</p>';
+else{sl.forEach(function(g){g.s=stats(g.l,0)});sl.sort(function(a,b){return b.s.n-a.s.n||a.n.localeCompare(b.n)});
+h+='<p class="sub" style="margin:0 0 8px">Considera as '+ns+" respostas (de "+s.n+") em que o nome do funcionário foi informado. Avalia os quesitos de atendimento.</p><div class=\"scroll\"><table><tr><th>Funcionário</th><th class=\"n\">Avaliações</th><th class=\"n\">Cordialidade</th><th class=\"n\">Clareza</th><th class=\"n\">% satisfeitos</th></tr>"+sl.map(function(g){var a=g.s,cc=a.cnt.cord+a.cnt.clar;return"<tr><td>"+esc(g.n)+'</td><td class="n">'+a.n+'</td><td class="n">'+(a.cnt.cord?nb(a.avg.cord,2):"—")+'</td><td class="n">'+(a.cnt.clar?nb(a.avg.clar,2):"—")+'</td><td class="n">'+(cc?Math.round((a.sat.cord*a.cnt.cord+a.sat.clar*a.cnt.clar)/cc)+"%":"—")+"</td></tr>"}).join("")+"</table></div>"}
+h+="</div>";
+CML=s.com;
+h+='<div class="card cmcard cmsec"><h3 style="margin-bottom:10px">Comentários</h3>';
+if(!CML.length)h+='<p class="sub">Nenhum comentário ainda.</p>';
+else h+='<div class="noprint" style="margin-bottom:10px"><input type="text" id="cq" aria-label="Buscar nos comentários" placeholder="Buscar por nome, bloco, unidade ou texto…" value="'+esc(FL.q)+'" oninput="FL.q=this.value;document.getElementById(\'cmbox\').innerHTML=cmHtml()"></div><p class="sub" style="margin:0 0 10px">Comentários de quem deu nota baixa aparecem primeiro e em destaque.</p><div id="cmbox">'+cmHtml()+"</div>";
+return h+"</div>"+rMan(base)}
 
 var flash="",N={n:"",d1:"",d2:"",i:"",h:"10:00"},NEWEV=[];
 try{NEWEV=JSON.parse(localStorage.getItem("calper_newev")||"[]")}catch(e){}
@@ -267,7 +332,7 @@ if(r.error){LGERR="E-mail ou senha incorretos.";render();return}LGERR="";await b
 async function logout(){await DB.auth.signOut();SESSION=null;ROLE=null;EV=[];R={};render()}
 async function loadAll(){var a=await DB.from("empreendimentos").select("id,nome").order("nome"),b=await DB.from("visitas").select("id,empreendimento_id,data_visita,fecha_em,convidados").order("data_visita"),c=await DB.from("respostas").select("visita_id,nome,bloco,unidade,conteudo").limit(1000);
 if(a.error||b.error||c.error)return false;EV=[];R={};(a.data||[]).forEach(function(e){var ss=(b.data||[]).filter(function(v){return v.empreendimento_id===e.id}).map(mkSdb);if(ss.length){EV.push({id:e.id,n:e.nome,ss:ss});ss.forEach(function(x){R[x.id]=[]})}});
-(c.data||[]).forEach(function(r){if(R[r.visita_id])R[r.visita_id].push({v:r.visita_id,resp:r.conteudo.respondente||"",name:r.nome,rep:!!r.conteudo.rep,block:r.bloco||"",unit:r.unidade||"",complete:true,a:r.conteudo.a||{}})});
+(c.data||[]).forEach(function(r){if(R[r.visita_id])R[r.visita_id].push({v:r.visita_id,resp:r.conteudo.respondente||"",name:r.nome,rep:!!r.conteudo.rep,block:r.bloco||"",unit:r.unidade||"",complete:true,a:r.conteudo.a||{},staff:r.conteudo.staff||""})});
 if(EV.length){if(!EV.some(function(e){return e.id===repEv}))repEv=EV[0].id;var e=EV.filter(function(x){return x.id===repEv})[0];if(view!=="all"&&view!=="cmp"&&!(S(view)&&S(view).e.id===repEv))view=e.ss[0].id;if(!S(qrS))qrS=e.ss[0].id}return true}
 async function loadVisita(){var r=await DB.rpc("obter_visita",{p_visita:cur}),v=r.data&&r.data[0];EV=[];R={};
 if(v){var s=mkS(v.id,v.data_visita,0,"");s.c=cTxt(v.fecha_em);s.st=v.aberta?"Aberta":"Encerrada";EV=[{id:"x",n:v.empreendimento,ss:[s]}];R[cur]=[]}}
