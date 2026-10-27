@@ -113,20 +113,44 @@ details.card>summary{cursor:pointer;font-weight:600}
 
 .tag.bu{background:#ececef;color:#1c1c1f;font-weight:700}
 .tag.rp{background:#e3edfb;color:#1d4f91}
-.adml{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}
-.side{background:#2f2f34;border-radius:8px;padding:10px;position:sticky;top:16px;color:#fff}
-.side .nt{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#a9a9b1;padding:6px 12px 8px}
-.side button.it{display:block;width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;color:#e6e6ea;font:500 .95rem/1.3 inherit;font-family:inherit;padding:11px 12px;border-radius:6px;cursor:pointer;margin-bottom:2px}
-.side button.it:hover{background:rgba(255,255,255,.08);color:#fff}
-.side button.it.on{background:rgba(255,255,255,.14);color:#fff;font-weight:600;border-left-color:#fff}
-.side button:focus-visible{outline:3px solid #fff;outline-offset:1px}
-.side .upd{border-top:1px solid rgba(255,255,255,.15);margin-top:10px;padding:12px 6px 4px;font-size:.8rem;color:#c9c9cf}
-.side .upd b{color:#ffb3b7}
-.side .rf{margin-top:8px;width:100%;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:7px 10px;font:500 .82rem inherit;font-family:inherit;cursor:pointer}
+.side{position:fixed;left:0;top:0;bottom:0;width:260px;background:#262c35;color:#fff;display:flex;flex-direction:column;padding:30px 14px 18px;overflow-y:auto;z-index:20}
+.side .lg{padding:0 10px 34px}.side .lg img{height:52px;width:auto;display:block;filter:brightness(0) invert(1)}
+.side button.it{display:block;width:100%;text-align:left;background:none;border:0;color:#9aa3b2;font-family:inherit;font-size:1.02rem;font-weight:600;line-height:1.3;padding:14px 16px;border-radius:9px;cursor:pointer;margin-bottom:6px;transition:background .15s,color .15s}
+.side button.it:hover{background:rgba(255,255,255,.07);color:#fff}
+.side button.it.on{background:#fff;color:#1c1c1f}
+.side button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.side .sp{flex:1}
+.side .upd{font-size:.8rem;color:#9aa3b2;padding:0 10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.side .upd b{color:#ff9aa0}
+.side .rf{background:none;border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:5px 10px;font-family:inherit;font-size:.8rem;font-weight:500;cursor:pointer}
 .side .rf:hover{background:rgba(255,255,255,.08)}
-.admmain{min-width:0}
-@media(max-width:819px){.adml{grid-template-columns:1fr;gap:14px}.side{position:static;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.side .nt{display:none}.side button.it{width:auto;margin:0;border-left:0;border-bottom:3px solid transparent;padding:9px 12px}.side button.it.on{border-bottom-color:#fff}.side .upd{border-top:0;margin:0 0 0 auto;padding:0;display:flex;gap:8px;align-items:center}.side .rf{margin:0;width:auto}}
-@media print{.adml{display:block}.side{display:none!important}}
+.side .usr{border-top:1px solid rgba(255,255,255,.12);padding:16px 10px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.side .av{width:34px;height:34px;border-radius:50%;background:#d8202c;color:#fff;font-family:inherit;font-size:.82rem;font-weight:700;line-height:34px;text-align:center;flex:none}
+.side .un{min-width:0;flex:1}.side .un b{display:block;font-size:.95rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.side .un small{color:#9aa3b2;font-size:.8rem}
+.side .out{width:100%;text-align:left;background:none;border:0;color:#c9ced8;font-family:inherit;font-size:.88rem;font-weight:500;padding:10px 0 0;cursor:pointer}
+.side .out:hover{color:#fff;text-decoration:underline}
+body.hs .top{display:none}
+body.hs .wrap.adm{max-width:none;margin:0;padding:28px 32px 60px 292px}
+.admmain{min-width:0;max-width:1180px}
+@media(max-width:819px){.side{position:static;width:auto;padding:14px 14px 12px;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center}.side .lg{padding:0 6px 8px;width:100%}.side .lg img{height:38px}.side button.it{width:auto;margin:0;padding:9px 13px;font-size:.92rem}.side .sp{display:none}.side .upd{width:100%;padding:8px 4px 0}.side .usr{width:100%;margin-top:8px;padding:12px 4px 0}body.hs .wrap.adm{padding:0 0 60px}body.hs .admmain{padding:16px}}
+@media print{.side{display:none!important}body.hs .wrap.adm{padding:0}body.hs .top{display:block}}
+
+/* Botões: vermelho com degradê e sombra, secundários brancos */
+.btn{font-family:inherit;font-size:.95rem;font-weight:700;line-height:1.2;border-radius:12px;padding:12px 22px;color:#fff;background:linear-gradient(180deg,#e2232e 0%,#b8131c 100%);border:0;box-shadow:0 6px 14px -4px rgba(190,20,30,.45),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .15s,box-shadow .15s,filter .15s}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 10px 18px -6px rgba(190,20,30,.55),inset 0 1px 0 rgba(255,255,255,.18)}
+.btn:active{transform:translateY(0);box-shadow:0 3px 8px -3px rgba(190,20,30,.5)}
+.btn.ghost,.btn.back{background:#fff;color:#1c1c1f;border:1px solid #e2e2e7;box-shadow:0 1px 3px rgba(20,20,30,.06)}
+.btn.ghost:hover,.btn.back:hover{filter:none;border-color:#c9c9d0;box-shadow:0 4px 10px -4px rgba(20,20,30,.15)}
+.btn.wa{background:linear-gradient(180deg,#1ea653 0%,#12803d 100%);box-shadow:0 6px 14px -4px rgba(18,128,61,.45),inset 0 1px 0 rgba(255,255,255,.18)}
+.btn.wa:hover{background:linear-gradient(180deg,#1ea653 0%,#12803d 100%)}
+.btn.sm{font-size:.84rem;padding:8px 14px;border-radius:10px}
+.btn[disabled],.btn[disabled]:hover{opacity:.6;transform:none;filter:none}
+.sub2 button,.chip{font-family:inherit;font-size:.88rem;font-weight:600;border-radius:10px;padding:8px 14px;border:1px solid #e2e2e7;background:#fff;box-shadow:0 1px 3px rgba(20,20,30,.06)}
+.sub2 button:hover{border-color:#c9c9d0}
+.sub2 button.on,.opts button.on{background:linear-gradient(180deg,#e2232e 0%,#b8131c 100%);border-color:#b8131c;color:#fff;box-shadow:0 6px 14px -4px rgba(190,20,30,.45),inset 0 1px 0 rgba(255,255,255,.18)}
+.opts button{font-family:inherit;font-size:.8rem;font-weight:500;line-height:1.2;border-radius:10px}
+.opts.two button{font-size:.95rem}
+td:last-child .btn.sm{white-space:nowrap}td:last-child:has(.btn){white-space:nowrap}
 </style>
 </head>
 <body>
@@ -194,8 +218,10 @@ Object.keys(LAB).forEach(function(k){var d=[0,0,0,0,0];c.forEach(function(r){var
 o.hora=c.length?c.filter(function(r){return r.a.hora==="Sim"}).length/c.length*100:0;o.ind=c.length?c.filter(function(r){return r.a.ind==="Sim"}).length/c.length*100:0;
 o.rep=c.filter(function(r){return r.rep}).length;o.com=c.filter(function(r){return r.a.fortes||r.a.melh});return o}
 function setAdm(a){adm=a;render()}
-function rAdmin(){var nav='<nav class="side noprint" aria-label="Menu do administrador"><div class="nt">Menu</div>'+ADMTABS().map(function(x){return '<button class="it'+(adm===x[0]?" on":"")+'"'+(adm===x[0]?' aria-current="page"':"")+' onclick="setAdm(\''+x[0]+'\')">'+x[1]+"</button>"}).join("")+'<div class="upd"><span>'+(CONN?"":"<b>Sem conexão · </b>")+"Atualizado às "+p2(LASTUP.getHours())+":"+p2(LASTUP.getMinutes())+'</span><button class="rf" onclick="refresh(true)">'+(UPD?"Atualizando…":"↻ Atualizar")+"</button></div></nav>";
-return '<div class="adml">'+nav+'<div class="admmain">'+(adm==="ov"?rOv():adm==="new"?rNew():adm==="rep"?rRep():rQR())+"</div></div>"}
+function uName(){var u=SESSION&&SESSION.user||{},m=u.user_metadata||{},n=m.full_name||m.name||"";if(!n&&u.email)n=u.email.split("@")[0].replace(/[._-]+/g," ").replace(/\b\w/g,function(c){return c.toUpperCase()});return n||"Usuário"}
+function rAdmin(){var nm=uName(),ini=nm.split(" ").filter(Boolean),lg=document.querySelector(".logo img");ini=((ini[0]||"")[0]||"")+((ini.length>1?ini[ini.length-1][0]:(ini[0]||"")[1])||"");
+var nav='<nav class="side noprint" aria-label="Menu do administrador"><div class="lg">'+(lg?'<img alt="Calper gestão compartilhada" src="'+lg.src+'">':"")+"</div>"+ADMTABS().map(function(x){return '<button class="it'+(adm===x[0]?" on":"")+'"'+(adm===x[0]?' aria-current="page"':"")+' onclick="setAdm(\''+x[0]+'\')">'+x[1]+"</button>"}).join("")+'<div class="sp"></div><div class="upd"><span>'+(CONN?"":"<b>Sem conexão · </b>")+"Atualizado às "+p2(LASTUP.getHours())+":"+p2(LASTUP.getMinutes())+'</span><button class="rf" onclick="refresh(true)">'+(UPD?"Atualizando…":"↻ Atualizar")+'</button></div><div class="usr"><span class="av" aria-hidden="true">'+esc(ini.toUpperCase())+'</span><div class="un"><b>'+esc(nm)+"</b><small>Perfil: "+(ROLE==="admin"?"Administrador":"Colaborador")+'</small></div><button class="out" onclick="logout()">Sair</button></div></nav>';
+return nav+'<div class="admmain">'+(adm==="ov"?rOv():adm==="new"?rNew():adm==="rep"?rRep():rQR())+"</div>"}
 function rOv(){var tn=0,ti=0,tr=0,ind=0,ns=0,rows="";
 EV.forEach(function(e){e.ss.forEach(function(s){var t=stats(R[s.id],s.inv);tn+=t.n;if(s.inv){ti+=s.inv;tr+=t.n}ind+=t.n*t.ind/100;ns++;
 rows+="<tr><td><b>"+esc(e.n)+"</b></td><td>"+s.f+'</td><td><span class="tag'+(s.st==="Encerrada"?" cl":"")+'">'+s.st+'</span></td><td class="n">'+(s.inv||"—")+'</td><td class="n">'+t.n+'</td><td class="n">'+(s.inv?Math.round(t.n/s.inv*100)+"%":"—")+'</td><td class="n">'+(t.n?t.ind.toFixed(0)+"%":"—")+'</td><td class="n"><button class="btn ghost sm" onclick="openRep(\''+e.id+"','"+s.id+'\')">Relatório</button> <button class="btn ghost sm" onclick="qrS=\''+s.id+"';setAdm('qr')\">QR</button>"+(ROLE==="admin"?' <button class="btn ghost sm" onclick="editV(\''+s.id+'\')">Editar</button>':"")+"</td></tr>"})});
@@ -351,7 +377,7 @@ if(v){var s=mkS(v.id,v.data_visita,0,"");s.c=cTxt(v.fecha_em);s.st=v.aberta?"Abe
 async function boot(){if(tp==="inv"){LOAD=true;render();await loadVisita();LOAD=false;render();return}
 var g=await DB.auth.getSession();SESSION=g.data.session;
 if(SESSION){var p=await DB.from("perfis").select("papel").eq("user_id",SESSION.user.id).maybeSingle();ROLE=p.data?p.data.papel:null;if(ROLE){LOAD=true;render();LOADFAIL=!(await loadAll());LOAD=false}}render()}
-var _r=render;render=function(){_r();var t=document.getElementById("tabs");t.innerHTML=(tp==="adm"&&SESSION)?'<button onclick="logout()">Sair</button>':""};
+var _r=render;render=function(){_r();document.body.classList.toggle("hs",!!document.querySelector("#app .side"));var t=document.getElementById("tabs");t.innerHTML=(tp==="adm"&&SESSION)?'<button onclick="logout()">Sair</button>':""};
 window.addEventListener("hashchange",function(){location.reload()});
 var LASTUP=new Date(),UPD=false,LOADFAIL=false,CONN=true,SENDING=false,ED=null,DEL=[],MANOPEN=false;
 async function refresh(manual){if(UPD||tp!=="adm"||!SESSION||!ROLE)return;UPD=true;if(manual)render();var ok=false;
