@@ -524,9 +524,18 @@ function edEmp(id){var m=id?EMPS.filter(function(x){return x.id===id})[0]:null;E
 function eeT(){if(EE.md==="total")return parseInt(EE.tot,10)||0;return EE.b.reduce(function(a,x){return a+(parseInt(x[1],10)||0)},0)}
 function eeUpT(){var el=document.getElementById("eeT");if(el)el.textContent=eeT()}
 function eeImg(inp,k){var f=inp.files&&inp.files[0];if(!f)return;if(!/^image\//.test(f.type)){EE.err=["Escolha um arquivo de imagem (JPG, PNG ou WebP)."];render();return}EE[k+"f"]=f;EE[k+"p"]=URL.createObjectURL(f);render()}
-function shrink(file,max,type){return new Promise(function(res,rej){var img=new Image();img.onload=function(){var k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(function(b){b?res(b):rej(new Error("imagem"))},type,.82)};img.onerror=function(){rej(new Error("imagem"))};img.src=URL.createObjectURL(file)})}
-async function upImg(file,id,kind){var png=kind==="logo",b=await shrink(file,png?600:1800,png?"image/png":"image/jpeg"),path=id+"/"+kind+"-"+Date.now()+(png?".png":".jpg");
-var r=await DB.storage.from("midia").upload(path,b,{contentType:png?"image/png":"image/jpeg",upsert:false});if(r.error)throw r.error;return DB.storage.from("midia").getPublicUrl(path).data.publicUrl}
+function toCanvas(src,max,type){var w=src.width,h=src.height;if(!w||!h)throw new Error("dim");var k=Math.min(1,max/Math.max(w,h)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));c.getContext("2d").drawImage(src,0,0,c.width,c.height);
+return new Promise(function(res,rej){try{c.toBlob(function(b){b?res(b):rej(new Error("blob"))},type,.85)}catch(x){rej(x)}})}
+function loadImg(url){return new Promise(function(res,rej){var img=new Image();img.onload=function(){res(img)};img.onerror=function(){rej(new Error("img"))};img.src=url})}
+function readData(file){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result)};fr.onerror=function(){rej(new Error("read"))};fr.readAsDataURL(file)})}
+async function shrink(file,max,type){
+try{if(window.createImageBitmap){var bm=await createImageBitmap(file);try{return await toCanvas(bm,max,type)}finally{if(bm.close)bm.close()}}}catch(x){}
+try{return await toCanvas(await loadImg(await readData(file)),max,type)}catch(x){}
+try{var u=URL.createObjectURL(file);try{return await toCanvas(await loadImg(u),max,type)}finally{URL.revokeObjectURL(u)}}catch(x){}
+return null}
+async function upImg(file,id,kind){var png=kind==="logo",b=await shrink(file,png?600:1800,png?"image/png":"image/jpeg"),ct=png?"image/png":"image/jpeg",ext=png?".png":".jpg";
+if(!b){var t=(file.type||"").toLowerCase();if(!/^image\/(jpeg|png|webp)$/.test(t))throw new Error("imagem");if(file.size>5242880)throw new Error("size");b=file;ct=t;ext=t==="image/png"?".png":t==="image/webp"?".webp":".jpg"}
+var path=id+"/"+kind+"-"+Date.now()+ext,r=await DB.storage.from("midia").upload(path,b,{contentType:ct,upsert:false});if(r.error)throw r.error;return DB.storage.from("midia").getPublicUrl(path).data.publicUrl}
 async function saveEmp(){if(!EE||EE.busy)return;var n=EE.n.trim(),er=[];if(!n)er.push("Informe o nome do empreendimento.");else if(EMPS.some(function(x){return x.id!==EE.id&&x.nome.trim().toLowerCase()===n.toLowerCase()}))er.push("Já existe um empreendimento com este nome. Escolha-o na lista.");
 var bl=EE.md==="total"?[]:EE.b.filter(function(x){return x[0].trim()||String(x[1]).trim()});
 if(EE.md==="total"){if(String(EE.tot).trim()&&!(parseInt(EE.tot,10)>0))er.push("O total de unidades precisa ser um número maior que zero, ou deixe o campo em branco.")}
