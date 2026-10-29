@@ -34,7 +34,7 @@
       ]
     },
     {
-      "source": "/(supabase|591.supabase|qrcode.min|html2canvas.min|pptxgen.bundle).js",
+      "source": "/(supabase|591.supabase|qrcode.min|html2canvas.min).js",
       "headers": [
         {
           "key": "Cache-Control",
