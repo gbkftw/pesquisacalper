@@ -379,8 +379,15 @@ tr.tt td{font-weight:700;border-bottom:0}
 .gs-c3h{padding:.8em .95em .45em}.gs-c3h b{font-size:1.05em}
 .gs-c3k{padding:.35em .95em .75em}.gs-c3k b{font-size:1.45em}
 .gs-c3l{padding:.7em .95em .8em}.gs-c3l p{margin-bottom:.5em}.gs-c3l div{font-size:.82em;padding:.38em 0}
-.gs-hb{width:auto;font-size:.9em}.gs-hb div{grid-template-columns:3.5em 6.5em 2.4em 3.4em;gap:.5em}
-.gs-hb small{font-size:.8em;color:#c9ced8;text-align:right;font-variant-numeric:tabular-nums}
+.gs-hb{width:auto;font-size:.9em}.gs-hb div{grid-template-columns:auto 6em auto;gap:.55em}
+.gs-hb em{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}.gs-hb em small{display:inline-block;min-width:3.3em;margin-left:.5em;font-size:.88em;font-weight:500;color:#c9ced8;text-align:right}
+
+/* Aba Relatórios: unidades por bloco na faixa e números em todas as partes das barras */
+.blks{flex:0 0 auto;min-width:0}.blks div{grid-template-columns:auto 5.5em auto}
+.blks .bp{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}.blks .bp small{display:inline-block;min-width:3.4em;margin-left:.5em;font-size:.92em;color:#c9ced8;text-align:right}
+@media(min-width:901px){.hkp{flex-wrap:nowrap}.hkp .hw{min-width:150px}}
+#rp .hin{grid-template-columns:minmax(0,1fr) auto}@media(max-width:1250px){#rp .hin{grid-template-columns:minmax(0,1fr)}#rp .hkp{justify-self:start}}
+.dv i{font-size:.68rem}@media(max-width:700px){.dv i{font-size:.62rem}}
 </style>
 </head>
 <body>
