@@ -120,8 +120,7 @@ EXP.forEach(function(r){var vs=r.v&&S(r.v);rows.push([e.n,vs?vs.s.f:"",r.name,r.
 var tx="﻿"+rows.map(function(rw){return rw.map(function(c){c=String(c==null?"":c);if(/^[=+\-@\t\r]/.test(c))c="'"+c;return'"'+c.replace(/"/g,'""')+'"'}).join(";")}).join("\r\n");
 var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([tx],{type:"text/csv;charset=utf-8"}));a.download=("Respostas - "+e.n+" - "+lb+".csv").replace(/[\/:*?"<>|]/g,"-");document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
 var TEMAS=[["Visita à própria unidade","unidade|apartamento|apto"],["Tempo de visita","tempo|demorad|rápid|curt"],["Acabamento","acabamento|piso|porcelanato|revestimento|bancada"],["Cronograma e prazos","cronograma|prazo|entrega|atraso"],["Informações e comunicação","informa|comunica|retorno|explica|esclarec"],["Organização e limpeza","organiza|limpeza|sujeira|canteiro"],["Sinalização e acesso","sinaliza|acesso|trajeto|estacionamento"],["Segurança","seguran|epi|capacete"],["Personalização","personaliza|cor|opç"],["Infraestrutura (ar, tomadas, elétrica)","ar condicionado|ar-condicionado|tomada|elétric|eletric|infra"]];
-function temas(l){var o=[],out=0;l.forEach(function(r){var m=(r.a.melh||"").trim();if(!m||/^(nada|nenhum|nenhuma|-|n\/a)\.?$/i.test(m))return;var hit=false;TEMAS.forEach(function(t,i){if(new RegExp(t[1],"i").test(m)){o[i]=(o[i]||0)+1;hit=true}});if(!hit)out++});
-var r=[];TEMAS.forEach(function(t,i){if(o[i])r.push({n:t[0],k:t[1].split("|")[0],c:o[i]})});r.sort(function(a,b){return b.c-a.c});return{l:r,out:out}}
+function temas(l){var r=tmConta(l,"melh",tmCfg().melh);return{l:r.l,out:r.out.length}}
 function spark(vals,labs,min,max,fmt,lab){var W=300,H=110,px=28,py=20,n=vals.length,x=function(i){return n>1?px+i*(W-2*px)/(n-1):W/2},y=function(v){return H-py-(Math.max(min,Math.min(max,v))-min)/(max-min)*(H-2*py)};
 var d=vals.map(function(v,i){return(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)}).join(" "),ar=n>1?d+" L"+x(n-1)+" "+(H-py)+" L"+x(0)+" "+(H-py)+" Z":"";
 return'<div class="evc"><div class="evh"><span>'+lab+'</span><b>'+fmt(vals[n-1])+'</b></div><svg viewBox="0 0 '+W+' '+(H+16)+'" role="img" aria-label="'+lab+'"><line x1="'+px+'" x2="'+(W-px)+'" y1="'+(H-py)+'" y2="'+(H-py)+'" class="ax"/>'+(ar?'<path d="'+ar+'" class="ar"/><path d="'+d+'" class="ln"/>':"")+vals.map(function(v,i){return'<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(i===n-1?4.5:3)+'" class="pt'+(i===n-1?" last":"")+'"/><text x="'+x(i)+'" y="'+(y(v)-9)+'" class="vl">'+fmt(v)+'</text><text x="'+x(i)+'" y="'+(H+10)+'" class="xl">'+labs[i]+'</text>'}).join("")+'</svg></div>'}
@@ -134,8 +133,8 @@ var h='<div class="card"><div class="grh"><div><h3 style="margin-bottom:4px">Sat
 if(!ord.length)return h+'<p class="sub" style="margin:0">'+(GM==="bloco"?"Nenhuma resposta com bloco informado.":"Nenhuma resposta com o nome do funcionário informado.")+"</p></div>";
 return h+'<div class="scroll"><table><tr><th>'+(GM==="bloco"?"Bloco":"Funcionário")+'</th><th class="n">Respostas</th><th class="n">Nota média</th>'+ks.map(function(k){return'<th class="n">'+LAB[k].split(" ")[0]+"</th>"}).join("")+"</tr>"+ord.map(function(k){var x=stats(g[k].l,0),gg=geral(x);return"<tr><td><b>"+esc(g[k].n)+'</b></td><td class="n">'+x.n+'</td><td class="n">'+(gg.ok?nb(gg.g,2):"—")+"</td>"+ks.map(function(q){if(!x.cnt[q])return'<td class="n">—</td>';var v=Math.round(x.sat[q]);return'<td class="n"><span class="heat" style="'+hsat(v)+'">'+v+"%</span></td>"}).join("")+"</tr>"}).join("")+'</table></div><p class="sub" style="margin:10px 0 0"><span class="heat" style="'+hsat(90)+'">80% ou mais</span> <span class="heat" style="'+hsat(70)+'">60 a 79%</span> <span class="heat" style="'+hsat(40)+'">abaixo de 60%</span></p></div>'}
 function rkey(r){return(r.v||"")+"|"+r.name+"|"+r.block+"|"+r.unit}
-function cxFilter(){var q=CQ.trim().toLowerCase();return CLIST.filter(function(r){if(CF==="low"&&!lowOf(r).length)return false;if(CF==="com"&&!(r.a.fortes||r.a.melh))return false;if(CF==="rep"&&!r.rep)return false;
-return!q||[r.name,r.resp,"bloco "+r.block,r.block,r.unit,r.a.fortes,r.a.melh].join(" ").toLowerCase().indexOf(q)>=0}).sort(function(a,b){return(lowOf(b).length>0)-(lowOf(a).length>0)||srt(a,b)})}
+function cxFilter(){var q=tmNorm(CQ.trim());return CLIST.filter(function(r){if(CF==="low"&&!lowOf(r).length)return false;if(CF==="com"&&!(r.a.fortes||r.a.melh))return false;if(CF==="rep"&&!r.rep)return false;
+return!q||tmNorm([r.name,r.resp,"bloco "+r.block,r.block,r.unit,r.a.fortes,r.a.melh].join(" ")).indexOf(q)>=0}).sort(function(a,b){return(lowOf(b).length>0)-(lowOf(a).length>0)||srt(a,b)})}
 function cxList(){var L=cxFilter();if(L.length&&!L.some(function(r){return rkey(r)===SELK}))SELK=rkey(L[0]);
 return L.length?L.map(function(r){var k=rkey(r),lw=lowOf(r).length;return'<button type="button" class="cxi'+(k===SELK?" on":"")+'" data-k="'+esc(k)+'" data-on-click="22"><span class="t"><span class="dot" style="background:'+(lw?"var(--r1)":"var(--g1)")+'"></span><b>'+esc(r.name)+'</b><span class="tag bu">'+esc(blk(r.block))+"·"+esc(r.unit)+"</span></span><span class=\"p\">"+esc(r.a.melh||r.a.fortes||"Sem comentário")+"</span></button>"}).join(""):'<p class="cxe">Nenhum investidor encontrado.</p>'}
 function cxDet(){var r=CLIST.filter(function(x){return rkey(x)===SELK})[0];if(!r)return'<p class="cxe">Selecione um investidor na lista.</p>';var lw=lowOf(r),vl=r.v&&S(r.v)?S(r.v).s.l:"";
@@ -185,13 +184,13 @@ h+='<div class="card"><h3 style="margin-bottom:4px">Investidores para contato</h
 h+=ct.length?'<div class="cmlist">'+ct.map(function(r){return'<div class="cm"><div class="cmh"><b>'+esc(r.name)+'</b><span class="tag bu">Bloco '+esc(blk(r.block))+" · Unidade "+esc(r.unit)+"</span>"+(r.rep?'<span class="tag rp">Representante'+(r.resp?": "+esc(r.resp):"")+"</span>":"")+'</div><div class="cmh">'+lowOf(r).map(function(m){return'<span class="tag bad">'+esc(m)+"</span>"}).join("")+"</div>"+(r.a.melh?"<blockquote><b>Melhoria:</b> "+esc(r.a.melh)+"</blockquote>":"")+'<button class="chip noprint" data-k="'+esc(rkey(r))+'" data-on-click="37">Ver pesquisa completa</button></div>'}).join("")+"</div>":'<p class="sub">Nenhum investidor nesta situação.</p>';
 h+="</div></div>";
 h+=SH("Satisfação por grupo")+rGrp(lst);
-var TM=temas(lst),hist=EVS.slice(0,eidx+1).map(function(z){var rr=rowsOf(z.ss),ss=stats(rr,0),gg=geral(ss),pp=pres(e,rr);return{l:z.mm,g:gg.ok?gg.g:null,p:pp.t?pp.p:null}});
-h+=SH("Temas e evolução")+'<div class="g2b"><div class="card"><h3 style="margin-bottom:4px">Temas mais citados nas melhorias</h3><p class="sub" style="margin:0 0 10px">Comentários de melhoria agrupados por assunto.<span class="noprint"> Clique num tema para ver quem citou.</span></p>';
+if(TE){h+=SH("Temas")+rTemasEd(lst)}else{var TM=temas(lst),hist=EVS.slice(0,eidx+1).map(function(z){var rr=rowsOf(z.ss),ss=stats(rr,0),gg=geral(ss),pp=pres(e,rr);return{l:z.mm,g:gg.ok?gg.g:null,p:pp.t?pp.p:null}});
+h+=SH("Temas e evolução")+'<div class="g2b"><div class="card"><div class="grh" style="margin-bottom:4px"><h3 style="margin:0">Temas mais citados nas melhorias</h3>'+(ROLE==="admin"?'<button type="button" class="btn sm gy noprint" data-on-click="'+TMH.open+'">Editar temas</button>':"")+'</div><p class="sub" style="margin:0 0 10px">Comentários de melhoria agrupados por assunto.<span class="noprint"> Clique num tema para ver quem citou.</span></p>';
 h+=TM.l.length?'<div class="tm">'+TM.l.map(function(t){return'<button type="button" class="tmr" data-on-click="38" data-a-click="'+esc(JSON.stringify([String(t.k)]))+'"><span class="tn">'+t.n+'</span><i><b style="width:'+(t.c/TM.l[0].c*100)+'%"></b></i><span class="tc">'+t.c+(t.c>1?" citações":" citação")+"</span></button>"}).join("")+"</div>"+(TM.out?'<p class="sub" style="margin:8px 0 0">'+TM.out+(TM.out>1?" comentários não se encaixam":" comentário não se encaixa")+" em nenhum tema.</p>":""):'<p class="sub">Nenhum comentário de melhoria ainda.</p>';
 h+='</div><div class="card"><h3 style="margin-bottom:4px">Evolução entre eventos</h3><p class="sub" style="margin:0 0 10px">Nota geral e presença das unidades em cada evento deste empreendimento.</p>';
 var hg=hist.filter(function(z){return z.g!==null}),hp=hist.filter(function(z){return z.p!==null});
 h+=hist.length<2?'<p class="sub">O gráfico aparece a partir do 2º evento deste empreendimento. Este é o '+ev.l.split(" · ")[0]+".</p>":'<div class="evg">'+(hg.length?spark(hg.map(function(z){return z.g}),hg.map(function(z){return z.l}),Math.max(1,Math.floor(Math.min.apply(null,hg.map(function(z){return z.g}))*2)/2-.5),5,function(v){return nb(v,2)},"Nota geral (1 a 5)"):"")+(hp.length?spark(hp.map(function(z){return z.p}),hp.map(function(z){return z.l}),0,Math.min(100,Math.max(50,Math.ceil(Math.max.apply(null,hp.map(function(z){return z.p}))/10)*10+10)),function(v){return v+"%"},"Presença das unidades"):'<p class="sub">Cadastre as unidades para ver a evolução da presença.</p>')+"</div>";
-h+="</div></div>";
+h+="</div></div>";}
 CLIST=lst.filter(function(r){return r.a.fortes||r.a.melh||lowOf(r).length||1});
 h+=SH("Comentários")+'<div class="card" id="cxbox"><h3 style="margin-bottom:4px">Comentários por investidor</h3><p class="sub noprint" style="margin:0 0 10px">Escolha um investidor ou unidade na lista para ver a pesquisa completa. Quem deu nota baixa aparece primeiro.</p>';
 h+=CLIST.length?'<div class="cx noprint"><div class="cxl0"><div class="cxf"><input id="cq" type="search" placeholder="Buscar investidor, bloco, unidade ou texto…" aria-label="Buscar comentários" value="'+esc(CQ)+'" data-on-input="39"><div class="cxch">'+[["all","Todos"],["low","Nota baixa"],["com","Com comentário"],["rep","Representantes"]].map(function(q){return'<button type="button" class="chip'+(CF===q[0]?" on":"")+'" data-f="'+q[0]+'" data-on-click="40" data-a-click="'+esc(JSON.stringify([String(q[0])]))+'">'+q[1]+"</button>"}).join("")+'</div></div><div class="cxs" id="cxl">'+cxList()+'</div></div><div class="cxd" id="cxd">'+cxDet()+"</div></div>":'<p class="sub">Nenhuma resposta ainda.</p>';
@@ -321,7 +320,7 @@ async function login(){LGE=document.getElementById("lg_e").value.trim();var r=aw
 if(r.error){LGERR="E-mail ou senha incorretos.";render();return}LGERR="";await boot()}
 async function logout(){await DB.auth.signOut();SESSION=null;ROLE=null;EV=[];R={};render()}
 async function loadAll(){var a=await DB.from("empreendimentos").select("id,nome,blocos,total_unidades,logo_branco,logo_url,foto_url,emails_relatorio,envio_auto").order("nome"),b=await DB.from("visitas").select("id,empreendimento_id,evento_id,data_visita,fecha_em,convidados").order("data_visita"),c=await DB.from("respostas").select("visita_id,nome,bloco,unidade,conteudo").limit(1000);
-if(a.error||b.error||c.error)return false;EMPS=(a.data||[]).map(function(e){e.blocos=Array.isArray(e.blocos)?e.blocos:[];return e});EV=[];R={};(a.data||[]).forEach(function(e){var ss=(b.data||[]).filter(function(v){return v.empreendimento_id===e.id}).map(mkSdb);if(ss.length){EV.push({id:e.id,n:e.nome,ss:ss,b:e.blocos,tu:e.total_unidades||0,lb:e.logo_branco!==false,logo:e.logo_url||"",foto:e.foto_url||"",em:e.emails_relatorio||[],auto:!!e.envio_auto});ss.forEach(function(x){R[x.id]=[]})}});
+if(a.error||b.error||c.error)return false;try{var tq=await DB.from("configuracoes").select("valor").eq("chave","temas").maybeSingle();if(!tq.error&&tq.data&&tmValido(tq.data.valor))TEMAS_CFG=tq.data.valor}catch(x){}EMPS=(a.data||[]).map(function(e){e.blocos=Array.isArray(e.blocos)?e.blocos:[];return e});EV=[];R={};(a.data||[]).forEach(function(e){var ss=(b.data||[]).filter(function(v){return v.empreendimento_id===e.id}).map(mkSdb);if(ss.length){EV.push({id:e.id,n:e.nome,ss:ss,b:e.blocos,tu:e.total_unidades||0,lb:e.logo_branco!==false,logo:e.logo_url||"",foto:e.foto_url||"",em:e.emails_relatorio||[],auto:!!e.envio_auto});ss.forEach(function(x){R[x.id]=[]})}});
 (c.data||[]).forEach(function(r){if(R[r.visita_id])R[r.visita_id].push({v:r.visita_id,resp:r.conteudo.respondente||"",name:r.nome,rep:!!r.conteudo.rep,block:r.bloco||"",unit:r.unidade||"",complete:true,a:r.conteudo.a||{},staff:r.conteudo.staff||""})});
 if(EV.length){if(!EV.some(function(e){return e.id===repEv}))repEv=EV[0].id;var e=EV.filter(function(x){return x.id===repEv})[0];if(view!=="all"&&view!=="cmp"&&!(S(view)&&S(view).e.id===repEv))view=e.ss[0].id;if(!S(qrS))qrS=e.ss[0].id}return true}
 async function loadVisita(){var r=await DB.rpc("obter_visita",{p_visita:cur}),v=r.data&&r.data[0];EV=[];R={};
@@ -488,31 +487,26 @@ var nInd=c.filter(function(r){return r.a.ind==="Não"}).length,nLow=c.filter(fun
 var lowQ=null;Object.keys(LAB).forEach(function(k){var n=s.dist[k][3]+s.dist[k][4];if(n&&(!lowQ||n>lowQ.n))lowQ={k:k,n:n}});
 var hist=EVS.slice(0,idx+1).map(function(z){var rr=rowsOf(z.ss),ss=stats(rr,0),gg=geral(ss),pp=pres(e,rr);return{l:z.mm,g:gg.ok?gg.g:null,p:pp.t?pp.p:null}});
 var sub=view!=="all"&&view!=="cmp"&&S(view)&&ev.ss.length>1?S(view).s.f:ev.dias,st=ev.ss.every(function(z){return z.st==="Encerrada"})?"Relatório final":"Prévia parcial";
-return{e:e,ev:ev,s:s,g:g,P:P,ks:ks,n:c.length,nInd:nInd,nLow:nLow,cont:cont,lowQ:lowQ,hist:hist,sub:sub,st:st,FT:gsTemas(c,"fortes",GS_FT),MT:gsTemas(c,"melh",GS_MT)}}
+return{e:e,ev:ev,s:s,g:g,P:P,ks:ks,n:c.length,nInd:nInd,nLow:nLow,cont:cont,lowQ:lowQ,hist:hist,sub:sub,st:st,FT:tmConta(c,"fortes",tmCfg().fortes).l.slice(0,5),MT:tmConta(c,"melh",tmCfg().melh).l.slice(0,5)}}
+function gsW(d,mn){var t=d.reduce(function(a,b){return a+b},0),L=d.map(function(){return false}),w=d.map(function(){return 0});for(var k=0;k<6;k++){var R=100,C=0;d.forEach(function(x,i){if(!x)return;if(L[i])R-=mn;else C+=x});var ch=false;d.forEach(function(x,i){if(!x){w[i]=0;return}if(L[i]){w[i]=mn;return}w[i]=C?x/C*R:0;if(w[i]<mn){L[i]=true;ch=true}});if(!ch)break}return w}
 function gsSlide(){var D=gsDados();if(!D)return"";var e=D.e,s=D.s,ks=D.ks,pct=function(k){return Math.round(s.sat[k])+"%"},short=function(k){return LAB[k].split(" ")[0]};
 var cl=document.querySelector(".logo img"),lsrc=e.logo?imgSrc(e.logo):"",logo=lsrc?(e.lb?GS_WL[lsrc]||lsrc:lsrc):(cl?GS_WL[cl.src]||cl.src:""),foto=imgSrc(e.foto);
 var bg=foto?GS_BG[foto]:"",h='<div class="gs"><header class="gs-band"'+(bg?' style="background-image:url(&quot;'+bg+'&quot;)"':'')+'><div class="gs-bl">'+(logo?'<img class="gs-lg" alt="" src="'+esc(logo)+'">':'')+'<small>Pesquisa de visita à obra · '+D.st+'</small><h1>'+esc(e.n)+'</h1><p>'+D.ev.l.split(" · ")[0]+' · '+esc(D.sub)+' · '+D.n+(D.n===1?' pesquisa respondida':' pesquisas respondidas')+'</p></div>';
-if(D.P.t){h+='<div class="gs-br">'+gsDonut(D.P.p)+'<div class="gs-tot"><b>'+D.P.v+'<small> de '+D.P.t+'</small></b><span>unidades visitaram o empreendimento</span><div class="gs-wf">';for(var i=0;i<100;i++)h+='<i'+(i<D.P.p?' class="on"':'')+'></i>';h+='</div></div>'+(D.P.bl.length>1?'<div class="gs-hb">'+D.P.bl.map(function(b){return'<div><span>Bloco '+esc(b.n)+'</span><i><b style="width:'+b.p+'%"></b></i><em>'+b.p+'%</em></div>'}).join("")+'</div>':'')+'</div>'}
+if(D.P.t){h+='<div class="gs-br">'+gsDonut(D.P.p)+'<div class="gs-tot"><b>'+D.P.v+'<small> de '+D.P.t+'</small></b><span>unidades visitaram o empreendimento</span><div class="gs-wf">';for(var i=0;i<100;i++)h+='<i'+(i<D.P.p?' class="on"':'')+'></i>';h+='</div></div>'+(D.P.bl.length>1?'<div class="gs-hb">'+D.P.bl.map(function(b){return'<div><span>Bloco '+esc(b.n)+'</span><i><b style="width:'+b.p+'%"></b></i><em>'+b.p+'%</em><small>'+b.c+'/'+b.t+'</small></div>'}).join("")+'</div>':'')+'</div>'}
 h+='</header><section class="gs-pad">';
-var best=ks[0],worst=ks[ks.length-1];
+var best=ks[0],worst=ks[ks.length-1],satq=function(k){return s.dist[k][0]+s.dist[k][1]};
 h+='<div class="gs-k5"><div class="gs-kbig"><b>'+(D.g.ok?Math.round(D.g.sp)+'%':'—')+'</b><div><span class="l">Satisfação geral</span><span class="s">Ótimo + Muito bom</span></div></div>'+
-(best?'<div class="gs-kt g"><b class="w">'+LAB[best]+'</b><span class="l">Melhor quesito</span><span class="s">média '+nb(s.avg[best],2)+' · '+pct(best)+' satisfeitos</span></div>':'<div></div>')+
-(worst&&worst!==best?'<div class="gs-kt r"><b class="w">'+LAB[worst]+'</b><span class="l">Pior quesito</span><span class="s">média '+nb(s.avg[worst],2)+' · '+pct(worst)+' satisfeitos</span></div>':'<div></div>')+
+(best?'<div class="gs-kt g"><b class="w">'+LAB[best]+'</b><span class="l">Melhor quesito</span><span class="s">'+satq(best)+' de '+s.cnt[best]+' satisfeitos · '+pct(best)+'</span></div>':'<div></div>')+
+(worst&&worst!==best?'<div class="gs-kt r"><b class="w">'+LAB[worst]+'</b><span class="l">Pior quesito</span><span class="s">'+satq(worst)+' de '+s.cnt[worst]+' satisfeitos · '+pct(worst)+'</span></div>':'<div></div>')+
 '<div class="gs-kt '+(s.ind>=80?'g':'r')+'"><b>'+(D.n?Math.round(s.ind)+'%':'—')+'</b><span class="l">Indicariam a Calper</span><span class="s">'+(D.n-D.nInd)+' de '+D.n+' investidores</span></div>'+
 '<div class="gs-kt '+(s.hora>=80?'g':'r')+'"><b>'+(D.n?Math.round(s.hora)+'%':'—')+'</b><span class="l">Atendidos no horário</span><span class="s">'+Math.round(s.hora*D.n/100)+' de '+D.n+' investidores</span></div></div>';
 var CL=["#1f7a4d","#8fcaa6","#d4d4d9","#e6a1a5","#a42a31"],TX=["#fff","#1c1c1f","#1c1c1f","#1c1c1f","#fff"];
-h+='<div class="gs-lg3"><div class="gs-cav"><h2>Avaliação por quesito</h2><div class="gs-lgd">'+SC.map(function(x,i){return'<span><s style="background:'+CL[i]+'"></s>'+x+'</span>'}).join("")+'</div>'+Object.keys(LAB).map(function(k){var d=s.dist[k],t=s.cnt[k];return'<div class="gs-q"><div class="gs-qh"><span>'+LAB[k]+'</span><em>'+(t?'<b>'+pct(k)+'</b> satisfeitos · média '+nb(s.avg[k],2):'sem respostas')+'</em></div><div class="gs-stk">'+(t?d.map(function(x,i){if(!x)return"";var w=x/t*100;return'<i style="width:'+w.toFixed(2)+'%;background:'+CL[i]+';color:'+TX[i]+'">'+(w>=16?x+' · '+Math.round(w)+'%':w>=6?x:'')+'</i>'}).join(""):'')+'</div></div>'}).join("")+'</div>';
+h+='<div class="gs-lg3"><div class="gs-cav"><h2>Avaliação por quesito</h2><div class="gs-lgd">'+SC.map(function(x,i){return'<span><s style="background:'+CL[i]+'"></s>'+x+'</span>'}).join("")+'</div><div class="gs-qs">'+Object.keys(LAB).map(function(k){var d=s.dist[k],t=s.cnt[k],W=t?gsW(d,9):[];return'<div class="gs-q"><div class="gs-qh"><span>'+LAB[k]+'</span><em>'+(t?'<b>'+pct(k)+'</b> satisfeitos ('+satq(k)+' de '+t+')':'sem respostas')+'</em></div><div class="gs-stk">'+(t?d.map(function(x,i){if(!x)return"";return'<i style="width:'+W[i].toFixed(2)+'%;background:'+CL[i]+';color:'+TX[i]+'">'+x+' · '+Math.round(x/t*100)+'%</i>'}).join(""):'')+'</div></div>'}).join("")+'</div></div>';
 var top3=ks.filter(function(k){return s.sat[k]>=80}).slice(0,3),meta=top3.length>0;if(!meta)top3=ks.slice(0,2);
 var bot=ks.slice().reverse().filter(function(k){return s.sat[k]<80}).slice(0,2);
 var lst=function(L,vazio){return L.length?L.map(function(t){return'<div><span>'+t.n+'</span><em>'+t.c+'</em></div>'}).join(""):'<div class="gs-vz">'+vazio+'</div>'};
 h+='<div class="gs-two"><div class="gs-c3 g"><div class="gs-c3h"><span class="gs-ic"><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M5 1.5 9 8.5H1z" fill="#fff"/></svg></span><div><b>Pontos fortes</b><span>'+(meta?'quesitos acima da meta de 80%':'melhores resultados do evento')+'</span></div></div><div class="gs-c3k">'+top3.map(function(k){return'<div><b>'+pct(k)+'</b><span>'+short(k)+'</span></div>'}).join("")+'</div><div class="gs-c3l"><p>Citados pelos investidores</p>'+lst(D.FT,"Nenhum comentário de ponto forte.")+'</div></div>';
 h+='<div class="gs-c3 r"><div class="gs-c3h"><span class="gs-ic"><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 1.5h8L5 8.5z" fill="#fff"/></svg></span><div><b>Pontos de atenção</b><span>abaixo da meta ou com rejeição</span></div></div><div class="gs-c3k">'+bot.map(function(k){return'<div><b>'+pct(k)+'</b><span>'+short(k)+'</span></div>'}).join("")+'<div><b>'+D.nInd+'</b><span>Não indicariam</span></div></div><div class="gs-c3l"><p>Melhorias pedidas pelos investidores</p>'+lst(D.MT,"Nenhum pedido de melhoria.")+'</div></div></div></div>';
-var H=D.hist,hg=H.filter(function(z){return z.g!==null}),hp=H.filter(function(z){return z.p!==null});
-h+='<div class="gs-lrow"><div><h2>Evolução entre eventos</h2>';
-if(H.length<2)h+='<div class="gs-evnone"><b>'+D.ev.l.split(" · ")[0]+' deste empreendimento</b><span>A evolução da nota e da presença aparece a partir do 2º evento.</span><div><em>Nota geral <strong>'+(D.g.ok?nb(D.g.g,2):'—')+'</strong></em><em>Presença <strong>'+(D.P.t?D.P.p+'%':'—')+'</strong></em></div></div>';
-else{var dg=hg.length>1?hg[hg.length-1].g-hg[hg.length-2].g:null,dp=hp.length>1?hp[hp.length-1].p-hp[hp.length-2].p:null;
-h+='<div class="gs-evg">'+(hg.length?gsSpark(hg.map(function(z){return z.g}),hg.map(function(z){return z.l}),Math.max(1,Math.floor(Math.min.apply(null,hg.map(function(z){return z.g}))*2)/2-.5),5,function(v){return nb(v,2)},"Nota geral (1 a 5)",dg===null?null:[dg>=0?"up":"dn",(dg>=0?"▲ ":"▼ ")+nb(Math.abs(dg),2)+" vs. anterior"]):'')+(hp.length?gsSpark(hp.map(function(z){return z.p}),hp.map(function(z){return z.l}),0,Math.min(100,Math.max(40,Math.ceil(Math.max.apply(null,hp.map(function(z){return z.p}))/10)*10+10)),function(v){return Math.round(v)+"%"},"Presença das unidades",dp===null?null:[dp>=0?"up":"dn",(dp>=0?"▲ ":"▼ ")+Math.abs(Math.round(dp))+" p.p. vs. anterior"]):'<div class="gs-evnone"><span>Cadastre o total de unidades para ver a evolução da presença.</span></div>')+'</div>'}
-h+='</div><div><h2>Retorno do RI</h2><div class="gs-riv"><div class="gs-rbig"><b>'+D.cont+'</b><span>investidores para o RI contatar</span></div><div class="gs-rch r"><b>'+D.nInd+'</b><span>não indicariam a Calper</span></div><div class="gs-rch m"><b>'+D.nLow+'</b><span>deram nota Ruim ou Péssimo</span></div><div class="gs-rch k"><b>'+(D.lowQ?D.lowQ.n:0)+'</b><span>'+(D.lowQ?'notas baixas em '+LAB[D.lowQ.k].toLowerCase():'nenhuma nota baixa')+'</span></div></div></div></div>';
 var d=new Date();h+='</section><footer class="gs-ft"><span>Calper · Relacionamento com o Investidor e Engenharia</span><span>Gerado em '+p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear()+'</span></footer></div>';return h}
 
 var GS_PPTX=[
@@ -620,3 +614,71 @@ b.classList.remove("cap");var png=await new Promise(function(ok,no){cv.toBlob(fu
 catch(x){alert("Não foi possível gerar o PowerPoint: "+(x&&x.message?x.message:"tente novamente."))}
 finally{var bx=document.getElementById("gprint");if(bx)bx.classList.remove("cap");GS_BUSY=false;if(btn){btn.disabled=false;btn.textContent=old}}}
 var GSH={ppt:_H.push(function(ev){pptRep(this)})-1};
+
+/* ===== TEMAS EDITÁVEIS (aba Relatórios, PDF e PowerPoint) =====
+   Cada tema tem um nome e palavras. Um comentário entra no tema se tiver alguma palavra
+   (sem diferenciar maiúsculas e acentos, e a palavra pode ser o começo de outra). */
+var TEMAS_PAD={melh:[
+{n:"Entorno e privacidade",p:["piscina","privacidade","vizinh","comunidade","favela","entorno","ruido","barulh"]},
+{n:"Visita à própria unidade",p:["unidade","apartamento","apto","imovel","identico"]},
+{n:"Organização da visita",p:["entrada","sinaliz","tempo","identifica","recepc"]},
+{n:"Cronograma e informações",p:["cronograma","prazo","andamento","informa","apresenta"]},
+{n:"Acabamento",p:["acabamento","piso","porcelanato","revestimento","bancada","louca","pedra"]},
+{n:"Comunicação e retorno",p:["comunica","retorno","contato","resposta"]},
+{n:"Segurança",p:["seguranc","epi","capacete"]},
+{n:"Infraestrutura (ar, tomadas, elétrica)",p:["ar condicionado","ar-condicionado","tomada","eletric"]}],
+fortes:[
+{n:"Explicações e esclarecimento de dúvidas",p:["explica","esclarec","duvid","transpar","pergunta","respond"]},
+{n:"Educação e atenção da equipe",p:["educa","cordial","atenc","atencios","simpat","gentil","funcionari","equipe"]},
+{n:"Organização e limpeza da obra",p:["organiza","limp"]},
+{n:"Segurança no canteiro",p:["seguranc","epi"]},
+{n:"Qualidade da obra e acabamento",p:["acabamento","qualidade","estrutura","construc"]},
+{n:"Espaços e projeto",p:["espaco","amplo","arejad","projeto","arquitet"]},
+{n:"Andamento da obra",p:["andamento","cronograma","prazo","evolu","planejad"]}]};
+var TEMAS_CFG=null,TE=null;
+function tmCfg(){return TEMAS_CFG||TEMAS_PAD}
+function tmClone(v){return JSON.parse(JSON.stringify(v))}
+function tmNorm(t){return String(t==null?"":t).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()}
+function tmRe(p){var w=(p||[]).map(function(x){return tmNorm(x).trim().replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/\s+/g,"\\s+")}).filter(Boolean);return w.length?new RegExp("(^|[^a-z0-9])("+w.join("|")+")"):null}
+function tmConta(l,campo,L){var T=(L||[]).map(function(t){return{n:t.n,k:t.p&&t.p[0]||"",re:tmRe(t.p),c:0}}),out=[];
+l.forEach(function(r){var x=r.a&&r.a[campo];if(gsVazio(x))return;var nx=tmNorm(x),hit=false;T.forEach(function(t){if(t.re&&t.re.test(nx)){t.c++;hit=true}});if(!hit)out.push(String(x).trim())});
+return{todos:T,l:T.filter(function(t){return t.c>0}).sort(function(a,b){return b.c-a.c}),out:out}}
+function tmValido(v){var ok=function(L){return Array.isArray(L)&&L.length<=20&&L.every(function(t){return t&&typeof t.n==="string"&&Array.isArray(t.p)&&t.p.every(function(x){return typeof x==="string"})})};return !!(v&&typeof v==="object"&&ok(v.melh)&&ok(v.fortes))}
+function tmPal(txt){var v=[],seen={};String(txt||"").split(/[,;\n]+/).forEach(function(x){x=x.trim().replace(/\s+/g," ");var k=tmNorm(x);if(x&&!seen[k]){seen[k]=1;v.push(x)}});return v}
+function tmAbrir(){if(ROLE!=="admin")return;TE={aba:"melh",L:tmClone(tmCfg()),err:[],busy:false,lst:[]};render();var c=document.getElementById("tmed");if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"})}
+function tmLbl(c){return c+(c===1?" comentário":" comentários")}
+function rTemasEd(lst){TE.lst=lst;var campo=TE.aba==="melh"?"melh":"fortes",L=TE.L[TE.aba],R=tmConta(lst,campo,L);
+var h='<div class="card tmed" id="tmed"><div class="grh"><div><h3 style="margin-bottom:4px">Editar temas dos relatórios</h3><p class="sub" style="margin:0">Cada tema junta os comentários que têm alguma das palavras. Maiúsculas e acentos não importam, e a palavra pode ser o começo de outra: “organiza” encontra “organização”. Os temas valem para esta aba e para o PDF e o PowerPoint.</p></div><div class="seg2" role="group" aria-label="Lista de temas">'+[["melh","Melhorias pedidas"],["fortes","Pontos fortes"]].map(function(x){return'<button type="button" class="'+(TE.aba===x[0]?"on":"")+'" aria-pressed="'+(TE.aba===x[0])+'" data-on-click="'+TMH.aba+'" data-a-click="'+esc(JSON.stringify([x[0]]))+'">'+x[1]+"</button>"}).join("")+"</div></div>";
+h+='<div class="tmhd"><span>Nome do tema</span><span>Palavras (separe por vírgula)</span><span>Neste relatório</span><span></span></div>';
+h+=L.length?L.map(function(t,i){return'<div class="tmrow"><input type="text" maxlength="60" aria-label="Nome do tema '+(i+1)+'" value="'+esc(t.n)+'" data-on-input="'+TMH.nome+'" data-a-input="'+esc(JSON.stringify([i]))+'"><input type="text" aria-label="Palavras do tema '+(i+1)+'" value="'+esc(t.p.join(", "))+'" data-on-input="'+TMH.pal+'" data-a-input="'+esc(JSON.stringify([i]))+'"><span class="tmc" id="tmc_'+i+'">'+tmLbl(R.todos[i].c)+'</span><button type="button" class="bx" aria-label="Remover o tema '+esc(t.n||String(i+1))+'" data-on-click="'+TMH.del+'" data-a-click="'+esc(JSON.stringify([i]))+'">×</button></div>'}).join(""):'<p class="sub">Nenhum tema nesta lista.</p>';
+h+='<button type="button" class="lnk" data-on-click="'+TMH.add+'">+ Adicionar tema</button>';
+h+='<div class="tmout" id="tm_out">'+tmOutHtml(R.out)+'</div>';
+(TE.err||[]).forEach(function(m){h+='<p class="err">'+esc(m)+"</p>"});
+h+='<div class="tmbt"><button type="button" class="btn"'+(TE.busy?" disabled":"")+' data-on-click="'+TMH.salvar+'">'+(TE.busy?"Salvando…":"Salvar temas")+'</button><button type="button" class="btn ghost" data-on-click="'+TMH.cancelar+'">Cancelar</button><button type="button" class="lnk" data-on-click="'+TMH.padrao+'">Restaurar temas padrão</button></div></div>';
+return h}
+function tmOutHtml(out){if(!out.length)return'<p class="sub" style="margin:0">Todos os comentários deste relatório se encaixam em algum tema.</p>';
+return'<p class="sub" style="margin:0 0 6px"><b>'+tmLbl(out.length)+' sem tema neste relatório.</b> Use as palavras deles para criar ou ajustar temas:</p><ul>'+out.slice(0,12).map(function(x){return"<li>"+esc(x.length>160?x.slice(0,157)+"…":x)+"</li>"}).join("")+"</ul>"+(out.length>12?'<p class="sub" style="margin:4px 0 0">e mais '+(out.length-12)+".</p>":"")}
+function tmUpd(){if(!TE)return;var R=tmConta(TE.lst,TE.aba==="melh"?"melh":"fortes",TE.L[TE.aba]);R.todos.forEach(function(t,i){var el=document.getElementById("tmc_"+i);if(el)el.textContent=tmLbl(t.c)});var o=document.getElementById("tm_out");if(o)o.innerHTML=tmOutHtml(R.out)}
+async function tmSalvar(){if(!TE||TE.busy)return;var er=[],v={v:1,melh:[],fortes:[]};
+["melh","fortes"].forEach(function(k){var nomes={},lab=k==="melh"?"Melhorias":"Pontos fortes";if(TE.L[k].length>20)er.push(lab+": no máximo 20 temas.");
+TE.L[k].forEach(function(t,i){var n=String(t.n||"").trim(),p=tmPal(t.p.join(","));if(!n&&!p.length)return;
+if(!n)er.push(lab+": o tema "+(i+1)+" está sem nome.");else if(nomes[tmNorm(n)])er.push(lab+": o tema “"+n+"” está repetido.");nomes[tmNorm(n)]=1;
+if(!p.length)er.push(lab+": o tema “"+(n||i+1)+"” precisa de pelo menos uma palavra.");
+if(p.length>30)er.push(lab+": o tema “"+n+"” tem mais de 30 palavras.");
+if(p.some(function(x){return x.length>40}))er.push(lab+": no tema “"+n+"” há uma palavra com mais de 40 letras.");
+v[k].push({n:n.slice(0,60),p:p.slice(0,30)})})});
+TE.err=er;if(er.length){render();return}TE.busy=true;render();var r;
+try{r=await DB.from("configuracoes").upsert({chave:"temas",valor:v}).select("chave")}catch(x){r={error:{message:"sem conexão"}}}
+TE.busy=false;if(r.error||!r.data||!r.data.length){TE.err=["Não foi possível salvar: "+(r.error?r.error.message:"sem permissão.")];render();return}
+TEMAS_CFG=v;TE=null;render()}
+var TMH={
+ open:_H.push(function(){tmAbrir()})-1,
+ aba:_H.push(function(ev,a){TE.aba=a[0];TE.err=[];render()})-1,
+ nome:_H.push(function(ev,a){TE.L[TE.aba][a[0]].n=this.value})-1,
+ pal:_H.push(function(ev,a){TE.L[TE.aba][a[0]].p=tmPal(this.value);tmUpd()})-1,
+ del:_H.push(function(ev,a){TE.L[TE.aba].splice(a[0],1);render()})-1,
+ add:_H.push(function(){TE.L[TE.aba].push({n:"",p:[]});render();var r=document.querySelectorAll(".tmrow input[aria-label^='Nome']");if(r.length)r[r.length-1].focus()})-1,
+ salvar:_H.push(function(){tmSalvar()})-1,
+ cancelar:_H.push(function(){TE=null;render()})-1,
+ padrao:_H.push(function(){TE.L=tmClone(TEMAS_PAD);TE.err=[];render()})-1
+};
